@@ -35,19 +35,36 @@ taskcycle은 이 충돌을 한 방향으로 정리한 단일 하네스입니다.
 ### 설치
 
 ```powershell
-# 1) 마켓플레이스 등록 후 플러그인 설치 (Claude Code)
 /plugin marketplace add <이 저장소 경로 또는 URL>
 /plugin install taskcycle
+```
 
-# 2) 운영 블록을 CLAUDE.md에 주입
+**이게 전부입니다.** 설정 파일을 고치거나 스크립트를 돌릴 필요가 없습니다.
+
+- **core 규칙**(증거·범위·판정·멈춤·디버깅·격리)은 `SessionStart` 훅이 세션마다 주입합니다. 모든 프로젝트에 즉시 적용되고 `CLAUDE.md`를 건드리지 않습니다.
+- **계획서 사이클**은 `/plan` 을 부르거나 `taskcycle` 스킬이 걸릴 때만 로드됩니다. 계획서를 쓰지 않는 리포에서는 아무 것도 요구하지 않습니다.
+
+### 두 층으로 나눈 이유
+
+| 층 | 내용 | 언제 로드되나 | 스코프 |
+|---|---|---|---|
+| **core** | 증거 기반 완료, 범위 고정, 완료 판정 주체, 중단 조건(2회 실패·블로커·파괴적 작업), 디버깅 진입점, 격리 | 세션 시작 시 자동 | 모든 프로젝트 |
+| **cycle** | 계획서 → 완주 → 적대 리뷰 → 보고, 문서 경로, `HANDOFF.md` | `/plan` 또는 스킬 호출 시 | 쓰는 리포에만 |
+
+core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 스크립트나 탐색용 리포에서 `docs/plans/` 를 만들라고 조르지 않습니다.
+
+### 팀 공유가 필요할 때만 — `setup.ps1`
+
+플러그인을 설치하지 않은 팀원의 세션에도 사이클 규칙을 적용하려면, 프로젝트 `CLAUDE.md` 에 사이클 블록을 커밋해 두면 됩니다.
+
+```powershell
 powershell -ExecutionPolicy Bypass -File "$env:CLAUDE_PLUGIN_ROOT\setup\setup.ps1" local
 
-# AGENTS.md에도 함께 넣으려면 (Codex 등)
+# AGENTS.md에도 함께 (Codex 등)
 powershell -ExecutionPolicy Bypass -File "$env:CLAUDE_PLUGIN_ROOT\setup\setup.ps1" local -Agents
 ```
 
-`local`은 현재 프로젝트의 `CLAUDE.md`, `global`은 `~/.claude/CLAUDE.md`에 주입합니다.
-주입은 멱등이며(마커 사이만 교체), 실행할 때마다 `*.taskcycle-bak.<timestamp>` 백업을 남깁니다.
+주입되는 것은 **사이클 블록뿐**입니다(core는 훅이 담당). 멱등이며(마커 사이만 교체) 실행할 때마다 `*.taskcycle-bak.<timestamp>` 백업을 남깁니다.
 
 제거:
 
@@ -85,8 +102,11 @@ powershell -ExecutionPolicy Bypass -File "$env:CLAUDE_PLUGIN_ROOT\setup\uninstal
 
 | 이벤트 | 스크립트 | 동작 |
 |---|---|---|
-| `UserPromptSubmit` | `hooks/gate.ps1` | 활성 계획서를 컨텍스트에 다시 올리고 불변 규칙을 상기 |
+| `SessionStart` | `hooks/core.ps1` | core 규칙을 주입. `source=compact` 에도 다시 주입해 압축으로 밀려난 규칙을 복구 |
+| `UserPromptSubmit` | `hooks/gate.ps1` | core 핵심을 한 줄로 매 턴 상기. 활성 계획서가 있으면 함께 올림 |
 | `Stop` | `hooks/finish-gate.ps1` | 활성 계획서가 남은 채 끝내려 하면 **세션당 1회만** 되물음 |
+
+`gate.ps1` 과 `finish-gate.ps1` 은 `docs/plans/` 를 실제로 읽어 판단하므로, 계획서가 없는 리포에서는 사이클을 일절 언급하지 않습니다.
 
 `Stop` 훅은 세션당 한 번만 개입하고 그 뒤로는 항상 통과시킵니다 — 완주를 유도하되 함정이 되지 않게 하기 위함입니다.
 중단 조건에 해당해 멈춘 것이라면 사유를 밝히고 그대로 끝내면 됩니다.
@@ -127,19 +147,36 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 ### Install
 
 ```powershell
-# 1) Add the marketplace and install the plugin (Claude Code)
 /plugin marketplace add <path or URL of this repo>
 /plugin install taskcycle
+```
 
-# 2) Inject the operating block into CLAUDE.md
+**That's all.** No config to edit, no script to run.
+
+- The **core rules** (evidence, scope, who decides completion, stop conditions, debugging entry point, isolation) are injected by a `SessionStart` hook on every session. They apply everywhere immediately and never touch `CLAUDE.md`.
+- The **plan cycle** loads only when you call `/plan` or the `taskcycle` skill triggers. Repos that don't use plans are never asked for one.
+
+### Why two layers
+
+| Layer | Contents | Loaded when | Scope |
+|---|---|---|---|
+| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), debugging entry point, isolation | automatically at session start | every project |
+| **cycle** | plan → run to completion → adversarial review → report, document layout, `HANDOFF.md` | on `/plan` or skill trigger | only repos that use it |
+
+core contains no plan requirement, so throwaway scripts and exploration repos are never nagged to create `docs/plans/`.
+
+### `setup.ps1` — only for sharing with a team
+
+To apply the cycle rules to teammates who haven't installed the plugin, commit the cycle block into the project's `CLAUDE.md`:
+
+```powershell
 powershell -ExecutionPolicy Bypass -File "$env:CLAUDE_PLUGIN_ROOT\setup\setup.ps1" local
 
-# To also write it into AGENTS.md (Codex and friends)
+# also write it into AGENTS.md (Codex and friends)
 powershell -ExecutionPolicy Bypass -File "$env:CLAUDE_PLUGIN_ROOT\setup\setup.ps1" local -Agents
 ```
 
-`local` targets the current project's `CLAUDE.md`; `global` targets `~/.claude/CLAUDE.md`.
-Injection is idempotent (it replaces only the marked region) and writes a `*.taskcycle-bak.<timestamp>` backup on every run.
+Only the **cycle block** is injected (core is the hook's job). Injection is idempotent — it replaces only the marked region — and writes a `*.taskcycle-bak.<timestamp>` backup on every run.
 
 Uninstall:
 
@@ -177,8 +214,11 @@ Skills also trigger on their own, without an explicit call:
 
 | Event | Script | Behavior |
 |---|---|---|
-| `UserPromptSubmit` | `hooks/gate.ps1` | Re-surfaces the active plan and restates the invariant rules |
+| `SessionStart` | `hooks/core.ps1` | Injects the core rules. Re-injects on `source=compact` to restore rules pushed out by compaction |
+| `UserPromptSubmit` | `hooks/gate.ps1` | Restates the core essentials in one line each turn; surfaces the active plan when there is one |
 | `Stop` | `hooks/finish-gate.ps1` | Asks back **once per session** if a turn ends while a plan is still active |
+
+`gate.ps1` and `finish-gate.ps1` read `docs/plans/` directly, so repos without plans never hear about the cycle at all.
 
 The `Stop` hook intervenes at most once per session and passes through afterwards — it nudges toward completion without becoming a trap.
 If work stopped because of a stop condition, state which one and end the turn.
