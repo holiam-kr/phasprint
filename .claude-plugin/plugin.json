@@ -1,0 +1,9 @@
+{
+  "name": "taskcycle",
+  "version": "0.1.0",
+  "description": "설계는 합의, 구현은 완주 — 계획서 승인 후 중단 조건에 걸리지 않는 한 끝까지 진행하는 작업 하네스. CLAUDE.md/AGENTS.md 주입 + 훅",
+  "author": {
+    "name": "holiam",
+    "email": "holiam.kr@gmail.com"
+  }
+}

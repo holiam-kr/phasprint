@@ -1,0 +1,11 @@
+# setup.ps1 이 남기는 백업
+*.taskcycle-bak.*
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# 에디터/도구 로컬 설정
+.claude/settings.local.json
+.vscode/
+.idea/

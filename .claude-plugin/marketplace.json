@@ -1,0 +1,14 @@
+{
+  "name": "taskcycle",
+  "owner": {
+    "name": "holiam",
+    "email": "holiam.kr@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "taskcycle",
+      "source": "./",
+      "description": "설계는 합의, 구현은 완주 — 승인 게이트를 계획서 한 곳으로 모으고, 중단 조건에 걸릴 때만 멈추는 작업 하네스"
+    }
+  ]
+}
