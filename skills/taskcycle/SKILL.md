@@ -1,110 +1,114 @@
 ---
 name: taskcycle
-description: 유의미한 개발 작업(기능 추가, 리팩토링, 다단계 변경)을 시작할 때 사용. 계획서를 쓰고 승인을 받은 뒤, 중단 조건에 걸리지 않는 한 끝까지 이어서 구현한다. "이거 만들어줘", "구현해줘", "계획 세워줘", "작업 시작" 요청 시.
+description: Use when starting meaningful development work (a new feature, a refactor, a multi-step change). Write a plan, get it approved, then carry the implementation through to completion unless a stop condition is hit. Triggers on "build this", "implement it", "write a plan", "start the task". 한국어 - "이거 만들어줘", "구현해줘", "계획 세워줘", "작업 시작".
 ---
 
-# taskcycle: 설계는 합의, 구현은 완주
+# taskcycle: agree on the design, then run the implementation to completion
 
-승인을 받기 위해 멈추는 지점은 **2단계(계획서 승인)** 와 **4단계(중단 조건)** 두 곳뿐이다.
-그 사이에서는 멈추지 않는다.
+There are exactly two places where you stop for approval: **step 2 (plan approval)** and
+**step 4 (stop conditions)**. Between them you do not stop.
 
-## 1. 타스크 정의
+## 1. Define the task
 
-목표와 범위를 사용자와 합의한다. 불확실한 지점은 추측으로 메우지 말고 묻는다.
-요청이 여러 독립 서브시스템을 담고 있으면 먼저 쪼갤 것을 제안한다 — 하나의 계획서는
-하나의 동작하는 산출물을 낸다.
+Agree on the goal and the scope with the user. Where something is uncertain, ask rather than
+fill the gap with a guess. If the request spans several independent subsystems, propose
+splitting it first — one plan produces one working deliverable.
 
-**예외 — 계획서 없이 진행:** 오타 수정, 한 줄 변경 수준의 사소한 작업.
-커밋 메시지로 기록만 남긴다. 사소한지 애매하면 사용자에게 묻는다.
-"너무 단순해서 설계가 필요 없다"를 안티패턴으로 취급하는 다른 지침이 있어도 이 예외가 우선한다.
+**Exception, no plan needed:** trivial work such as a typo fix or a one-line change.
+Record it in the commit message and move on. If you cannot tell whether it is trivial, ask.
+This exception wins even when other guidance treats "too simple to need a design" as an
+anti-pattern.
 
-## 2. 수행 계획서 → 승인 대기
+## 2. Write the plan, then wait for approval
 
-`docs/plans/task_NNN.md` 에 작성한다 (NNN은 기존 파일 다음 번호, `archives/` 포함해서 센다).
+Write it to `docs/plans/task_NNN.md` (NNN is the next number after existing files, counting
+`archives/` too).
 
 ```markdown
-# task_NNN: <제목>
+# task_NNN: <title>
 
-## 목표
-<무엇을 왜 — 한두 문장>
+## Goal
+<what and why — one or two sentences>
 
-## 범위
-포함: <...>
-제외: <...>
+## Scope
+In: <...>
+Out: <...>
 
-## 단계
-### 1. <단계명>
-- 산출물: <파일/기능>
-- 검증: <실행 가능한 명령. 예: `pytest tests/test_x.py -q`>
+## Steps
+### 1. <step name>
+- Deliverable: <file / capability>
+- Verification: <a runnable command, e.g. `pytest tests/test_x.py -q`>
 ### 2. ...
-(3~6단계)
+(3-6 steps)
 
-## 위험/미확인
-- <"확인 필요" 항목>
+## Risks / unverified
+- <items marked "unverified">
 ```
 
-작성 후 **사용자 승인을 기다린다. 사전 승인 지점은 여기 하나뿐이다.**
-계획 자체에 문제가 보이면 근거를 들어 반대 의견을 먼저 낸다.
+Once written, **wait for the user's approval. This is the only up-front gate.**
+If you see a problem with the plan itself, raise the objection with reasons first.
 
-## 3. 연속 구현
+## 3. Continuous implementation
 
-승인된 계획서의 모든 단계를 끝까지 이어서 수행한다.
+Carry every step of the approved plan through to completion, one after another.
 
-- 단계마다 코드 + 테스트를 쓴다. 테스트를 먼저 쓸지 나중에 쓸지는 강제하지 않는다 —
-  단계가 끝나는 시점에 테스트가 존재하고 통과하면 된다.
-- 각 단계 종료 시 품질 관문을 통과시킨다: 단위 테스트, lint, 기존 테스트 전체(회귀).
-  UI가 있으면 실제 렌더러에서 확인한다(레이아웃, 인터랙션, 반응형, 로딩/에러 상태).
-  정적 검사는 관찰이 아니다.
-- **단계 사이에서 승인을 받기 위해 멈추지 않는다.** 진행 기록은 `docs/working/` 에 남긴다.
-- 의미 단위로 자주 커밋한다.
-- 신규 기능 전에 재사용 가능한 기존 모듈을 먼저 확인한다. 단, 두 번째 사용처가
-  나타나기 전에는 공통화하지 않는다.
-- 요청받은 범위 밖은 건드리지 않는다. 곁다리 리팩토링 금지.
+- Write code and tests for each step. Test-first or test-after is not mandated — what matters
+  is that tests exist and pass by the time the step ends.
+- Clear the quality gate at the end of each step: unit tests, lint, and the full existing
+  suite (regression). If there is UI, check it in a real renderer (layout, interaction,
+  responsiveness, loading and error states). Static inspection is not observation.
+- **Do not stop between steps to seek approval.** Keep progress notes in `docs/working/`.
+- Commit often, in meaningful units.
+- Look for an existing reusable module before writing a new one. But do not factor something
+  out until a second call site actually appears.
+- Do not touch anything outside the requested scope. No incidental refactoring.
 
-## 4. 중단 조건
+## 4. Stop conditions
 
-아래에 걸리면 즉시 멈추고 사용자에게 묻는다. 추측으로 메우고 진행하지 않는다.
+Stop immediately and ask the user when any of these hits. Do not paper over it with a guess.
 
-1. 승인된 계획서의 범위·설계를 벗어나는 결정이 필요할 때
-2. 적대 리뷰에서 결함·엣지 케이스·보안 문제가 나왔을 때
-3. 품질 관문 실패가 2회 시도 후에도 해결되지 않을 때
-4. 블로커 — 의존성·자격증명 부재, 계획서의 지시가 모호할 때
-5. 파괴적 작업이 필요할 때 — force push, `reset --hard`, 파일 대량 삭제, 미커밋 변경 폐기.
-   AI가 만들지 않은 변경(사용자가 직접 수정했을 수 있는 파일)은 임의로 되돌리지 않는다.
+1. A decision is needed that departs from the approved plan's scope or design
+2. The adversarial review turned up a defect, an edge case, or a security problem
+3. A quality gate failure survives two attempts
+4. A blocker — a missing dependency or credential, or an ambiguous instruction in the plan
+5. A destructive action is required — force push, `reset --hard`, bulk file deletion,
+   discarding uncommitted work. Never revert changes you did not make (a file the user may
+   have edited by hand).
 
-원인 불명의 실패라면 `taskcycle-investigate` 스킬을 따른다.
+For a failure whose cause is unclear, follow the `taskcycle-investigate` skill.
 
-## 5. 적대 리뷰
+## 5. Adversarial review
 
-주요 설계·구현이 끝나면 스스로 반대 입장에 선다: 결함, 엣지 케이스, 보안 문제,
-더 단순한 대안을 찾아 보고한다. "잘 동작하는 것 같습니다"로 넘어가지 않는다.
-여기서 문제가 나오면 4번 중단 조건에 해당한다.
+Once the main design and implementation are done, argue against yourself: look for defects,
+edge cases, security problems, and simpler alternatives, then report them. Do not settle for
+"it seems to work". Anything you find here is stop condition 4.
 
-## 6. 최종 보고
+## 6. Final report
 
-- 결과 요약 + **각 단계의 검증 근거**(이번 세션에서 실제로 실행한 명령의 출력).
-  실행하지 않은 것을 통과했다고 말하지 않는다. 확인 못 한 것은 "확인 필요"로 명시한다.
-- `HANDOFF.md` 갱신 — 단일 스냅샷 하나만 유지한다:
-  개요 / 완료된 것 / 진행 중인 것 / 다음 할 일 / 주의사항. 누적하지 않고 덮어쓴다.
-- 핵심 결정은 `docs/decisions/` 에 남긴다 (배경 + 기각한 대안 포함).
-- 완료된 계획서를 `docs/plans/archives/` 로 이동하고 커밋한다.
-- **완료 판정은 사용자가 한다.** 스스로 완료 선언하지 않는다.
+- Summarize the outcome and give **verification evidence for every step** (output from
+  commands you actually ran this session). Never call something passing that you did not run.
+  Mark anything you could not confirm as "unverified".
+- Update `HANDOFF.md` — keep exactly one snapshot: overview / done / in progress / next /
+  cautions. Overwrite it rather than appending.
+- Record key decisions in `docs/decisions/` (context plus the alternatives you rejected).
+- Move the finished plan to `docs/plans/archives/` and commit.
+- **The user decides completion.** Never declare it yourself.
 
-## 격리
+## Isolation
 
-대규모 리팩토링·실험적 변경 등 위험한 작업만 branch 또는 worktree에서 진행한다.
-일상 작업까지 격리 워크스페이스를 만들지 않는다.
+Use a branch or worktree only for risky work such as large refactors or experimental changes.
+Do not create an isolated workspace for routine work.
 
-## 문서 경로
+## Document layout
 
-이 경로 체계를 쓴다. 다른 도구가 `docs/superpowers/` 같은 별도 트리나 별도 상태 파일을
-제안해도 따르지 않는다.
+Use this layout. Do not follow other tools when they propose a separate tree such as
+`docs/superpowers/` or a separate state file.
 
-| 용도 | 경로 |
+| Purpose | Path |
 |---|---|
-| 수행 계획서 | `docs/plans/task_NNN.md` → 완료 시 `docs/plans/archives/` |
-| 진행 기록 | `docs/working/` |
-| 결정 기록 | `docs/decisions/` |
-| 현재 스냅샷 | `HANDOFF.md` (단 하나) |
+| Plan | `docs/plans/task_NNN.md` → `docs/plans/archives/` when done |
+| Progress notes | `docs/working/` |
+| Decisions | `docs/decisions/` |
+| Current snapshot | `HANDOFF.md` (exactly one) |
 
-새 세션은 `CLAUDE.md` → `HANDOFF.md` → 진행 중 계획서 순으로 읽고 시작한다.
+A new session starts by reading `CLAUDE.md` → `HANDOFF.md` → the plan in progress, in that order.

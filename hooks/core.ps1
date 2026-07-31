@@ -1,32 +1,32 @@
 ﻿<#
-taskcycle SessionStart 훅 — 어디서나 참인 규칙(core)을 세션 시작 시 주입한다.
-플러그인을 설치하기만 하면 적용된다. CLAUDE.md를 건드리지 않는다.
+taskcycle SessionStart hook -- injects the rules that hold everywhere (core) at session start.
+Installing the plugin is all it takes. It never touches CLAUDE.md.
 
-source 가 compact 인 경우에도 그대로 다시 주입한다 — 컨텍스트가 압축되어
-초반 메시지가 사라졌을 때 core 를 복구하는 것이 이 훅의 핵심 역할이다.
+It re-injects on source=compact as well -- restoring core after compaction has pushed the
+early messages out of context is the whole point of this hook.
 
-계획서 사이클(계획서 → 완주 → HANDOFF)은 여기 넣지 않는다.
-/plan 커맨드나 taskcycle 스킬이 호출될 때만 로드된다.
+The plan cycle (plan -> run to completion -> HANDOFF) does not belong here.
+That loads only when the /plan command or the taskcycle skill is invoked.
 #>
 $ErrorActionPreference = 'SilentlyContinue'
-# stdout 은 콘솔 코드페이지(한국어 Windows 는 CP949)로 나가는데 훅 출력은 UTF-8 로 읽힌다. 맞춰 준다.
+# stdout goes out in the console code page, but hook output is read as UTF-8. Line them up.
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 [void][Console]::In.ReadToEnd()
 
 $core = @'
-# 작업 원칙 (taskcycle core)
+# Working rules (taskcycle core)
 
-- **증거** — 완료·통과·수정됨을 주장하려면 이번 세션에서 실제로 실행한 명령의 출력을 근거로 댄다. 이전 실행 결과, "될 것 같다", 코드를 읽고 내린 추론은 근거가 아니다. 확인하지 못한 것은 "확인 필요"로 명시한다.
-- **범위** — 요청받은 것만 한다. 곁다리 리팩토링, 지시하지 않은 파일·설정·주석의 "개선" 금지. 변경한 모든 줄은 사용자의 요청으로 거슬러 올라갈 수 있어야 한다.
-- **판정** — 완료 판정은 사용자가 한다. 스스로 완료를 선언하지 않는다. 사용자의 제안이라도 문제가 있으면 근거를 들어 반대한다.
-- **멈춤** — 다음 세 경우 즉시 멈추고 묻는다. 추측으로 메우고 진행하지 않는다.
-  1. 같은 문제로 2회 시도해도 해결되지 않을 때
-  2. 블로커 — 의존성·자격증명 부재, 지시가 모호할 때
-  3. 파괴적 작업이 필요할 때 — force push, `reset --hard`, 파일 대량 삭제, 미커밋 변경 폐기. AI가 만들지 않은 변경은 임의로 되돌리지 않는다.
-- **디버깅** — 버그·테스트 실패·원인 불명 동작은 수정 코드를 쓰기 전에 `taskcycle-investigate` 스킬 절차를 따른다: 재현 먼저 → 경쟁 가설 3개 이상 → 가설별 증거 → 전체 인과사슬 → 수정 전후 검증 → 기각한 가설도 보고.
-- **격리** — 대규모 리팩토링·실험적 변경 등 위험한 작업만 branch 또는 worktree에서 한다. 일상 작업까지 격리 워크스페이스를 만들지 않는다.
+- **Evidence** -- To claim anything is done, passing, or fixed, cite output from a command you actually ran this session. Earlier runs, "this should work", and inferences drawn from reading code are not evidence. Mark anything you could not confirm as "unverified".
+- **Scope** -- Do only what was asked. No incidental refactoring, no "improving" files, settings, or comments you were not told to touch. Every line you change must trace back to the user's request.
+- **Verdict** -- The user decides when work is complete. Never declare completion yourself. When the user's own suggestion has a problem, say so with reasons.
+- **Stop** -- Stop and ask immediately in these three cases. Do not fill the gap with a guess and carry on.
+  1. The same problem survives two attempts
+  2. A blocker -- a missing dependency or credential, or an ambiguous instruction
+  3. A destructive action is needed -- force push, `reset --hard`, bulk file deletion, discarding uncommitted work. Never revert changes you did not make.
+- **Debugging** -- For bugs, test failures, or unexplained behavior, follow the `taskcycle-investigate` skill before writing a single line of fix: reproduce first -> three or more competing hypotheses -> evidence per hypothesis -> the full causal chain -> verify before and after the fix -> report the hypotheses you rejected as well.
+- **Isolation** -- Use a branch or worktree only for risky work such as large refactors or experimental changes. Do not spin up an isolated workspace for routine work.
 
-다단계 작업을 계획서 → 완주 → 보고 사이클로 진행하려면 `/plan <작업>` 을 쓴다.
+To run multi-step work through the plan -> completion -> report cycle, use `/plan <task>`.
 '@
 
 Write-Output $core

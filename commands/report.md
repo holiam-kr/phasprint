@@ -1,12 +1,13 @@
 ---
-description: "최종 보고: 검증 근거 제시 + HANDOFF.md 갱신 + 계획서 아카이브 + 커밋"
+description: "Final report: verification evidence + HANDOFF.md update + archive the plan + commit"
 ---
 
-${CLAUDE_PLUGIN_ROOT}/skills/taskcycle/SKILL.md 의 6단계를 수행하라.
+Carry out step 6 of ${CLAUDE_PLUGIN_ROOT}/skills/taskcycle/SKILL.md.
 
-- 각 단계의 검증 근거를 제시한다. **이번 세션에서 실제로 실행한 명령의 출력만** 근거로 쓴다.
-  실행하지 않은 것을 통과했다고 말하지 않는다. 확인 못 한 것은 "확인 필요"로 명시한다.
-- `HANDOFF.md` 를 단일 스냅샷으로 덮어쓴다: 개요 / 완료된 것 / 진행 중인 것 / 다음 할 일 / 주의사항.
-- 핵심 결정이 있었으면 `docs/decisions/` 에 남긴다 (배경 + 기각한 대안).
-- 완료된 계획서를 `docs/plans/archives/` 로 옮기고 커밋한다.
-- 완료 판정은 사용자가 한다. 스스로 완료를 선언하지 않는다.
+- Give verification evidence for every step. Use **only output from commands you actually ran
+  this session**. Never call something passing that you did not run. Mark anything you could
+  not confirm as "unverified".
+- Overwrite `HANDOFF.md` as a single snapshot: overview / done / in progress / next / cautions.
+- Record any key decisions in `docs/decisions/` (context plus the alternatives you rejected).
+- Move the finished plan to `docs/plans/archives/` and commit.
+- The user decides completion. Never declare it yourself.

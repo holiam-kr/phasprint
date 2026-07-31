@@ -1,14 +1,14 @@
 ﻿<#
-taskcycle Stop 훅 — 승인된 계획서가 아직 살아 있는데 턴을 끝내려 하면 한 번만 되묻는다.
+taskcycle Stop hook -- asks back once when a turn ends while an approved plan is still open.
 
-설계 의도: "완주"를 강제하되 함정이 되지 않게 한다.
-  - 세션당 최대 1회만 block. 그 뒤로는 항상 통과시킨다.
-  - stop_hook_active(이미 이 훅 때문에 재개된 상태)면 통과시킨다.
-  - 활성 계획서가 없으면 아무 것도 하지 않는다.
-중단 조건에 해당해서 멈춘 것이라면 모델이 그 사유를 대고 그대로 끝내면 된다.
+Design intent: push toward completion without becoming a trap.
+  - Blocks at most once per session. It passes through every time after that.
+  - Passes through when stop_hook_active is set (the turn already resumed because of this hook).
+  - Does nothing at all when there is no active plan.
+If the model stopped because of a stop condition, it states which one and ends the turn.
 #>
 $ErrorActionPreference = 'SilentlyContinue'
-# stdout 은 콘솔 코드페이지(한국어 Windows 는 CP949)로 나가는데 훅 출력은 UTF-8 로 읽힌다. 맞춰 준다.
+# stdout goes out in the console code page, but hook output is read as UTF-8. Line them up.
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 
 $raw = [Console]::In.ReadToEnd()
@@ -27,7 +27,7 @@ $active = Get-ChildItem -Path $plansDir -Filter 'task_*.md' -File |
           Where-Object { $_.DirectoryName -notmatch '\\archives$' }
 if ($active.Count -eq 0) { exit 0 }
 
-# 세션당 1회 제한 — 리포지토리를 더럽히지 않도록 TEMP에 마커를 둔다.
+# Once per session -- keep the marker in TEMP so the repository stays clean.
 $sid = $in.session_id
 if (-not $sid) { $sid = 'nosession' }
 $markerDir = Join-Path $env:TEMP 'taskcycle'
@@ -38,15 +38,15 @@ New-Item -ItemType File -Path $marker -Force | Out-Null
 
 $names = ($active | Select-Object -ExpandProperty Name) -join ', '
 $reason = @"
-활성 계획서가 남아 있습니다: $names
+An active plan is still open: $names
 
-계획서의 남은 단계가 끝나지 않았다면 승인을 다시 받지 말고 이어서 진행하세요.
-이미 끝났다면 최종 보고를 하세요: 각 단계의 검증 근거 제시 → HANDOFF.md 갱신 →
-계획서를 docs/plans/archives/ 로 이동 → 커밋. 완료 판정은 사용자가 합니다.
+If the plan has steps left, continue without seeking approval again.
+If it is finished, give the final report: present verification evidence for each step ->
+update HANDOFF.md -> move the plan to docs/plans/archives/ -> commit. The user decides completion.
 
-중단 조건(범위 이탈 / 적대 리뷰 지적 / 품질 관문 2회 실패 / 블로커 / 파괴적 작업)에
-해당해서 멈춘 것이라면, 어느 조건인지 밝히고 그대로 종료하세요.
-(이 확인은 세션당 한 번만 나옵니다.)
+If you stopped because of a stop condition (scope departure / adversarial-review finding /
+quality gate failing twice / blocker / destructive action), say which one and end the turn.
+(This check appears only once per session.)
 "@
 
 $out = @{ decision = 'block'; reason = $reason } | ConvertTo-Json -Compress

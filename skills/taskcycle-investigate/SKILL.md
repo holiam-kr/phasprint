@@ -1,49 +1,60 @@
 ---
 name: taskcycle-investigate
-description: 버그·테스트 실패·원인 불명 동작을 조사할 때 사용. "왜 실패하지", "이 버그 원인", "디버깅", "재현이 안 됨", "테스트가 깨짐" 요청 시. 수정안을 내기 전에 먼저 사용한다.
+description: Use when investigating a bug, a test failure, or unexplained behavior. Triggers on "why is this failing", "what causes this bug", "debug this", "it won't reproduce", "the test broke". Use it before proposing any fix. 한국어 - "왜 실패하지", "이 버그 원인", "디버깅", "재현이 안 됨", "테스트가 깨짐".
 ---
 
-# 조사 프로토콜
+# Investigation protocol
 
-**수정 코드를 쓰기 전에 이 절차를 끝낸다.** 증상만 보고 고치면 증상만 사라진다.
+**Finish this procedure before writing a single line of fix.** Fix what you can see and only
+the symptom goes away.
 
-## 1. 재현 먼저
+## 1. Reproduce first
 
-- 실패를 재현하는 명령을 찾아 실행하고, **실제 출력**을 확보한다. 재현하지 못하면 조사를 시작하지 않는다.
-- 재현이 안 되면 그 사실 자체를 보고한다(환경 차이·타이밍·데이터 의존을 의심). 추측으로 넘어가지 않는다.
-- 재현 명령을 기록해 둔다. 수정 후 같은 명령으로 검증한다.
+- Find and run the command that reproduces the failure, and capture the **actual output**.
+  If you cannot reproduce it, do not start investigating.
+- When it will not reproduce, report that fact itself (suspect environment differences,
+  timing, or data dependence). Do not move on with a guess.
+- Write the reproduction command down. You will run it again to verify the fix.
 
-## 2. 경쟁 가설 3개 이상
+## 2. Three or more competing hypotheses
 
-- 원인 후보를 **최소 3개** 세운다. 첫 번째로 떠오른 것 하나만 쫓지 않는다.
-- 서로 다른 층위에서 낸다: 입력/데이터, 로직, 상태·수명주기, 환경·설정, 의존 라이브러리, 동시성.
-- 각 가설은 "참이라면 무엇이 관찰되어야 하는가"를 함께 적는다. 이게 없으면 검증 불가능한 가설이다.
+- Form **at least three** candidate causes. Do not chase the first one that comes to mind.
+- Draw them from different layers: input/data, logic, state and lifecycle, environment and
+  configuration, dependencies, concurrency.
+- For each hypothesis, write down what should be observable if it were true. Without that,
+  the hypothesis cannot be tested.
 
-## 3. 가설별 증거 수집
+## 3. Evidence per hypothesis
 
-- 가설마다 그것을 **기각하거나 확증하는** 관찰을 만든다: 로그, 중단점, 최소 재현 케이스, 이분 탐색(`git bisect`), 입력 축소.
-- 증거는 실행 결과여야 한다. 코드를 읽고 "그럴 것 같다"는 증거가 아니다.
-- 기각된 가설과 그 근거를 남긴다. 최종 보고에 포함한다.
+- For each hypothesis, construct an observation that **refutes or confirms** it: logs,
+  breakpoints, a minimal reproduction, bisection (`git bisect`), input reduction.
+- Evidence must be execution output. Reading the code and concluding "it's probably this"
+  is not evidence.
+- Keep the hypotheses you rejected and why. They go in the final report.
 
-## 4. 전체 인과사슬
+## 4. The full causal chain
 
-- 살아남은 가설로 **근본 원인 → 중간 단계 → 관찰된 증상**까지 끊김 없이 설명한다.
-- 사슬에 "아마 여기서" 같은 빈칸이 있으면 아직 원인을 모르는 것이다. 3번으로 돌아간다.
-- 왜 지금까지 드러나지 않았는지, 다른 곳에도 같은 원인이 있는지 확인한다.
+- Using the surviving hypothesis, explain **root cause → intermediate steps → observed
+  symptom** with no gaps.
+- A gap such as "and then somewhere around here" means you do not know the cause yet.
+  Go back to step 2.
+- Check why this went unnoticed until now, and whether the same cause exists elsewhere.
 
-## 5. 수정 전후 검증
+## 5. Verify before and after the fix
 
-- 1번의 재현 명령을 **수정 전에** 실행해 실패를 확인하고, **수정 후에** 실행해 통과를 확인한다. 양쪽 출력을 모두 확보한다.
-- 회귀 확인: 기존 테스트 전체를 돌린다.
-- 재발 방지 테스트를 추가한다(원래 증상을 직접 겨냥한 것).
+- Run the reproduction command from step 1 **before** the fix to confirm the failure, and
+  **after** the fix to confirm it passes. Capture both outputs.
+- Check for regressions: run the full existing test suite.
+- Add a test that prevents recurrence, aimed directly at the original symptom.
 
-## 6. 보고
+## 6. Report
 
-- 근본 원인과 인과사슬
-- 기각한 가설과 기각 근거
-- 수정 전/후 검증 출력
-- 남은 위험·미확인 사항("확인 필요"로 명시)
+- The root cause and the causal chain
+- The hypotheses you rejected and the grounds for rejecting them
+- Verification output from before and after the fix
+- Remaining risks and anything unconfirmed (mark it "unverified")
 
-## 중단
+## Stopping
 
-- 2회 시도 후에도 원인이 좁혀지지 않으면 멈추고, 지금까지의 가설·증거·막힌 지점을 보고한 뒤 사용자에게 묻는다. 계속 추측하지 않는다.
+- If two attempts fail to narrow the cause, stop. Report the hypotheses, the evidence so far,
+  and where you are stuck, then ask the user. Do not keep guessing.
