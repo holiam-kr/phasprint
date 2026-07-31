@@ -1,4 +1,4 @@
-# taskcycle
+# Phasprint
 
 **설계는 합의, 구현은 완주.**
 
@@ -16,7 +16,7 @@ Claude Code용 작업 하네스. 승인 게이트를 계획서 한 곳으로 모
 - "너무 단순한 작업은 없다"며 한 줄 수정에도 설계·승인을 요구하는 스킬
 - 계획서·상태 파일 경로가 도구마다 달라 같은 내용이 여러 트리로 갈라짐
 
-taskcycle은 이 충돌을 단일 하네스로 정리합니다.
+Phasprint는 이 충돌을 단일 하네스로 정리합니다.
 
 ## 핵심 규칙
 
@@ -34,15 +34,15 @@ taskcycle은 이 충돌을 단일 하네스로 정리합니다.
 ## 설치
 
 ```
-/plugin marketplace add holiam-kr/taskcycle
-/plugin install taskcycle
+/plugin marketplace add holiam-kr/phasprint
+/plugin install phasprint
 ```
 
 **이게 전부입니다.** 설정 파일을 고치거나 스크립트를 돌릴 필요가 없습니다.
 
 - **core 규칙**(증거·범위·판정·멈춤·디버깅·격리)은 `SessionStart` 훅이 세션마다 주입합니다.
   모든 프로젝트에 즉시 적용되고 `CLAUDE.md`를 건드리지 않습니다.
-- **계획서 사이클**은 `/plan` 을 부르거나 `taskcycle` 스킬이 걸릴 때만 로드됩니다.
+- **계획서 사이클**은 `/plan` 을 부르거나 `sprint` 스킬이 걸릴 때만 로드됩니다.
   계획서를 쓰지 않는 리포에서는 아무 것도 요구하지 않습니다.
 
 ## 두 층으로 나눈 이유
@@ -55,7 +55,7 @@ taskcycle은 이 충돌을 단일 하네스로 정리합니다.
 core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 스크립트나 탐색용 리포에서
 `docs/plans/` 를 만들라고 조르지 않습니다.
 
-> **주의:** taskcycle은 fablize / superpowers를 **대체하도록** 설계되었습니다.
+> **주의:** Phasprint는 fablize / superpowers를 **대체하도록** 설계되었습니다.
 > 함께 켜 두면 사소한 작업 예외와 문서 경로에서 다시 충돌합니다. 두 플러그인을 비활성화하고,
 > `CLAUDE.md`에 남은 `FABLIZE` 블록은 fablize의 uninstall 스크립트로 제거하세요.
 
@@ -69,8 +69,8 @@ core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 �
 
 스킬은 명시적 호출 없이도 작업 성격에 따라 자동으로 걸립니다:
 
-- `taskcycle` — 다단계 개발 작업
-- `taskcycle-investigate` — 버그·테스트 실패·원인 불명 동작
+- `sprint` — 다단계 개발 작업
+- `investigate` — 버그·테스트 실패·원인 불명 동작
 
 ## 문서 경로
 

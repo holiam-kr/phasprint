@@ -1,12 +1,12 @@
 {
-  "name": "taskcycle",
+  "name": "phasprint",
   "owner": {
     "name": "holiam",
     "email": "holiam.kr@gmail.com"
   },
   "plugins": [
     {
-      "name": "taskcycle",
+      "name": "phasprint",
       "source": "./",
       "description": "Agree on the design, then run the implementation to completion — one approval gate at the plan, then stops only on explicit stop conditions."
     }

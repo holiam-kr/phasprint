@@ -1,9 +1,9 @@
 ---
-name: taskcycle
+name: sprint
 description: Use when starting meaningful development work (a new feature, a refactor, a multi-step change). Write a plan, get it approved, then carry the implementation through to completion unless a stop condition is hit. Triggers on "build this", "implement it", "write a plan", "start the task". 한국어 - "이거 만들어줘", "구현해줘", "계획 세워줘", "작업 시작".
 ---
 
-# taskcycle: agree on the design, then run the implementation to completion
+# sprint: agree on the design, then run the implementation to completion
 
 There are exactly two places where you stop for approval: **step 2 (plan approval)** and
 **step 4 (stop conditions)**. Between them you do not stop.
@@ -75,7 +75,7 @@ Stop immediately and ask the user when any of these hits. Do not paper over it w
    discarding uncommitted work. Never revert changes you did not make (a file the user may
    have edited by hand).
 
-For a failure whose cause is unclear, follow the `taskcycle-investigate` skill.
+For a failure whose cause is unclear, follow the `investigate` skill.
 
 ## 5. Adversarial review
 

@@ -2,7 +2,7 @@
 description: "Implement an approved plan to completion. Argument: [plan file] (defaults to the active plan)"
 ---
 
-Carry out steps 3-5 of ${CLAUDE_PLUGIN_ROOT}/skills/taskcycle/SKILL.md.
+Carry out steps 3-5 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
 
 - Plan: $ARGUMENTS (if empty, the active plan in `docs/plans/`. If there are several, ask which one.)
 - Carry every step of the plan through to completion. **Do not stop between steps to seek approval.**

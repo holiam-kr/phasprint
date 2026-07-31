@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * taskcycle Stop hook -- asks back once when a turn ends while an approved plan is still open.
+ * phasprint Stop hook -- asks back once when a turn ends while an approved plan is still open.
  *
  * Design intent: push toward completion without becoming a trap.
  *   - Blocks at most once per session. It passes through every time after that.
@@ -78,7 +78,7 @@ try {
   if (active.length === 0) process.exit(0);
 
   // Once per session -- keep the marker in the temp dir so the repository stays clean.
-  const markerDir = path.join(os.tmpdir(), 'taskcycle');
+  const markerDir = path.join(os.tmpdir(), 'phasprint');
   fs.mkdirSync(markerDir, { recursive: true });
 
   const keys = markerKeys(input.session_id, cwd);

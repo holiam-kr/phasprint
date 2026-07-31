@@ -1,4 +1,4 @@
-# taskcycle
+# Phasprint
 
 **Agree on the design, then run the implementation to completion.**
 
@@ -17,7 +17,7 @@ Stacking multiple agent harnesses makes their rules collide. In particular:
 - Plan and state files scattered across tool-specific paths, splitting the same content
   across several trees
 
-taskcycle resolves these into a single harness.
+Phasprint resolves these into a single harness.
 
 ## Core rules
 
@@ -35,8 +35,8 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 ## Install
 
 ```
-/plugin marketplace add holiam-kr/taskcycle
-/plugin install taskcycle
+/plugin marketplace add holiam-kr/phasprint
+/plugin install phasprint
 ```
 
 **That's all.** No config to edit, no script to run.
@@ -44,7 +44,7 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 - The **core rules** (evidence, scope, who decides completion, stop conditions, debugging
   entry point, isolation) are injected by a `SessionStart` hook on every session. They apply
   everywhere immediately and never touch `CLAUDE.md`.
-- The **plan cycle** loads only when you call `/plan` or the `taskcycle` skill triggers.
+- The **plan cycle** loads only when you call `/plan` or the `sprint` skill triggers.
   Repos that don't use plans are never asked for one.
 
 ## Why two layers
@@ -57,7 +57,7 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 core contains no plan requirement, so throwaway scripts and exploration repos are never
 nagged to create `docs/plans/`.
 
-> **Note:** taskcycle is designed to **replace** fablize / superpowers. Running them together
+> **Note:** Phasprint is designed to **replace** fablize / superpowers. Running them together
 > reintroduces the conflicts around the trivial-work exception and document paths. Disable
 > both plugins, and remove any leftover `FABLIZE` block from `CLAUDE.md` with fablize's own
 > uninstall script.
@@ -72,8 +72,8 @@ nagged to create `docs/plans/`.
 
 Skills also trigger on their own, without an explicit call:
 
-- `taskcycle` — multi-step development work
-- `taskcycle-investigate` — bugs, test failures, unexplained behavior
+- `sprint` — multi-step development work
+- `investigate` — bugs, test failures, unexplained behavior
 
 ## Document layout
 

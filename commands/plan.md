@@ -2,7 +2,7 @@
 description: "Write a plan and get it approved. Argument: <task description>"
 ---
 
-Carry out steps 1-2 of ${CLAUDE_PLUGIN_ROOT}/skills/taskcycle/SKILL.md.
+Carry out steps 1-2 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
 
 - Task: $ARGUMENTS
 - Agree on the goal and scope first, then write a 3-6 step plan to `docs/plans/task_NNN.md`.

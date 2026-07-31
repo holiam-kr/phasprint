@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * taskcycle UserPromptSubmit hook -- restates the core essentials each turn, and surfaces the
+ * phasprint UserPromptSubmit hook -- restates the core essentials each turn, and surfaces the
  * active plan when the cycle is under way.
  *
  * The full text injected by SessionStart (core.cjs) can be pushed out once a conversation grows
  * long, so this compresses the essentials and revives them every turn.
  *
  * Repos without plans never hear about the cycle -- writing a plan is not a core requirement,
- * it is asked for only when the /plan command or the taskcycle skill is invoked.
+ * it is asked for only when the /plan command or the sprint skill is invoked.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const ESSENTIALS =
-  'taskcycle: claims of done or passing rest on command output from this session only - ' +
+  'phasprint: claims of done or passing rest on command output from this session only - ' +
   'stay inside the requested scope - stop and ask when blocked twice or when a destructive ' +
   'action is needed.';
 
