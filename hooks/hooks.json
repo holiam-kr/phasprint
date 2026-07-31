@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/core.ps1\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/core.cjs\"",
             "timeout": 30
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/gate.ps1\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gate.cjs\"",
             "timeout": 30
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/hooks/finish-gate.ps1\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/finish-gate.cjs\"",
             "timeout": 30
           }
         ]

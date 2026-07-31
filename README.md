@@ -86,12 +86,14 @@ Skills also trigger on their own, without an explicit call:
 
 | Event | Script | Behavior |
 |---|---|---|
-| `SessionStart` | `hooks/core.ps1` | Injects the core rules. Re-injects on `source=compact` to restore rules pushed out by compaction |
-| `UserPromptSubmit` | `hooks/gate.ps1` | Restates the core essentials in one line each turn; surfaces the active plan when there is one |
-| `Stop` | `hooks/finish-gate.ps1` | Asks back **once per session** if a turn ends while a plan is still active |
+| `SessionStart` | `hooks/core.cjs` | Injects the core rules. Re-injects on `source=compact` to restore rules pushed out by compaction |
+| `UserPromptSubmit` | `hooks/gate.cjs` | Restates the core essentials in one line each turn; surfaces the active plan when there is one |
+| `Stop` | `hooks/finish-gate.cjs` | Asks back **once per session** if a turn ends while a plan is still active |
 
-`gate.ps1` and `finish-gate.ps1` read `docs/plans/` directly, so repos without plans never
+`gate.cjs` and `finish-gate.cjs` read `docs/plans/` directly, so repos without plans never
 hear about the cycle at all.
+
+All three fail open: any error exits 0 silently, so a hook can never block a session.
 
 The `Stop` hook intervenes at most once per session and passes through afterwards — it nudges
 toward completion without becoming a trap. If work stopped because of a stop condition, state
@@ -100,7 +102,8 @@ which one and end the turn.
 ## Requirements
 
 - Claude Code
-- Windows / PowerShell 5.1+ (the hooks are PowerShell-only; no Python or bash dependency)
+- Node on `PATH` (the hooks are plain CommonJS with no dependencies). Works on Windows,
+  macOS, and Linux alike.
 
 ## License
 
