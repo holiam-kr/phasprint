@@ -8,6 +8,8 @@ SessionStart(core.ps1)가 넣은 전문은 대화가 길어지면 압축으로 �
 /plan 커맨드나 taskcycle 스킬이 호출될 때만 요구된다.
 #>
 $ErrorActionPreference = 'SilentlyContinue'
+# stdout 은 콘솔 코드페이지(한국어 Windows 는 CP949)로 나가는데 훅 출력은 UTF-8 로 읽힌다. 맞춰 준다.
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 
 $raw = [Console]::In.ReadToEnd()
 $cwd = $null

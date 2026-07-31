@@ -9,6 +9,8 @@ source 가 compact 인 경우에도 그대로 다시 주입한다 — 컨텍스�
 /plan 커맨드나 taskcycle 스킬이 호출될 때만 로드된다.
 #>
 $ErrorActionPreference = 'SilentlyContinue'
+# stdout 은 콘솔 코드페이지(한국어 Windows 는 CP949)로 나가는데 훅 출력은 UTF-8 로 읽힌다. 맞춰 준다.
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 [void][Console]::In.ReadToEnd()
 
 $core = @'
