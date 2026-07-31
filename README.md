@@ -5,6 +5,8 @@
 A task harness for Claude Code. It collapses the approval gates into one — the plan — and
 after that only stops on explicit stop conditions.
 
+English · [한국어](README.ko.md)
+
 ## Why
 
 Stacking multiple agent harnesses makes their rules collide. In particular:
@@ -33,8 +35,8 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 ## Install
 
 ```
-/plugin marketplace add <path or URL of this repo>
-/plugin install taskcycle@taskcycle
+/plugin marketplace add holiam-kr/taskcycle
+/plugin install taskcycle
 ```
 
 **That's all.** No config to edit, no script to run.
