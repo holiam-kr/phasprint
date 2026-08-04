@@ -32,6 +32,10 @@ Phasprint resolves these into a single harness.
 Evidence rule: any claim that something is done, passing, or fixed must be backed by
 **output from a command actually run in this session**.
 
+Secret rule: once a key, token, password, or `.env` value is read, it is **masked from that
+point on** — reproduced only as its first 4 and last 4 characters, never in full, in replies,
+files, commits, commands, logs, or subagent prompts.
+
 ## Install
 
 ```
@@ -41,9 +45,9 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 
 **That's all.** No config to edit, no script to run.
 
-- The **core rules** (evidence, scope, who decides completion, stop conditions, debugging
-  entry point, isolation) are injected by a `SessionStart` hook on every session. They apply
-  everywhere immediately and never touch `CLAUDE.md`.
+- The **core rules** (evidence, scope, who decides completion, stop conditions, secret
+  masking, debugging entry point, isolation) are injected by a `SessionStart` hook on every
+  session. They apply everywhere immediately and never touch `CLAUDE.md`.
 - The **plan cycle** loads only when you call `/plan` or the `sprint` skill triggers.
   Repos that don't use plans are never asked for one.
 
@@ -51,7 +55,7 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 
 | Layer | Contents | Loaded when | Scope |
 |---|---|---|---|
-| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), debugging entry point, isolation | automatically at session start | every project |
+| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), secret masking, debugging entry point, isolation | automatically at session start | every project |
 | **cycle** | plan → run to completion → adversarial review → report, document layout, `HANDOFF.md` | on `/plan` or skill trigger | only repos that use it |
 
 core contains no plan requirement, so throwaway scripts and exploration repos are never
