@@ -81,7 +81,7 @@ For a failure whose cause is unclear, follow the `investigate` skill.
 
 Once the main design and implementation are done, argue against yourself: look for defects,
 edge cases, security problems, and simpler alternatives, then report them. Do not settle for
-"it seems to work". Anything you find here is stop condition 4.
+"it seems to work". Anything you find here is stop condition 2.
 
 ## 6. Final report
 
