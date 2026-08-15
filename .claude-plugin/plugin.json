@@ -8,10 +8,7 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/holiam-kr/phasprint",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/holiam-kr/phasprint.git"
-  },
+  "repository": "https://github.com/holiam-kr/phasprint.git",
   "keywords": [
     "harness",
     "workflow",

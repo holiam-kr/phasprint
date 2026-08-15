@@ -120,12 +120,28 @@ test('every command carries a Korean trigger and the plugin-root fallback', () =
   }
 });
 
-test('the plugin manifest declares its provenance', () => {
+// Types, not just presence. `repository` was once written as {type, url} -- npm's shape, not
+// this one -- and Claude Code rejected the whole manifest, so no hook and no skill loaded at
+// all. Presence alone would have passed that. The reference shape is the official cwc-makers
+// plugin: every field a string except author (object) and keywords (array).
+test('the plugin manifest declares its provenance with the right types', () => {
   const manifest = JSON.parse(read('.claude-plugin/plugin.json'));
-  for (const field of ['name', 'version', 'description', 'author', 'license', 'homepage', 'repository', 'keywords']) {
-    assert.ok(manifest[field], `plugin.json is missing ${field}`);
+  const expected = {
+    name: 'string',
+    version: 'string',
+    description: 'string',
+    license: 'string',
+    homepage: 'string',
+    repository: 'string',
+  };
+  for (const [field, type] of Object.entries(expected)) {
+    assert.equal(typeof manifest[field], type, `plugin.json: ${field} must be a ${type}`);
+    assert.ok(manifest[field].length > 0, `plugin.json: ${field} is empty`);
   }
+  assert.equal(typeof manifest.author, 'object', 'plugin.json: author must be an object');
+  assert.ok(Array.isArray(manifest.keywords), 'plugin.json: keywords must be an array');
   assert.match(manifest.license, /MIT/);
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
 });
 
 test('both skills expose the same top-level sections', () => {
