@@ -1,5 +1,5 @@
 ---
-description: "Final report: verification evidence + HANDOFF.md update + archive the plan + commit"
+description: "Final report: verification evidence + HANDOFF.md update + archive the plan + commit 한국어 - 최종 보고, 마무리, 정리하고 커밋."
 ---
 
 Carry out step 6 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
@@ -11,3 +11,5 @@ Carry out step 6 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
 - Record any key decisions in `docs/decisions/` (context plus the alternatives you rejected).
 - Move the finished plan from `docs/plans/approved/` to `docs/plans/archives/` and commit.
 - The user decides completion. Never declare it yourself.
+- If `${CLAUDE_PLUGIN_ROOT}` above is not a readable path, it was not expanded: locate the
+  phasprint plugin under the installed plugin directory and read the skill from there.

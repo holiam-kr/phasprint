@@ -8,6 +8,19 @@ description: Use when starting meaningful development work (a new feature, a ref
 There are exactly two places where you stop for approval: **step 2 (plan approval)** and
 **step 4 (stop conditions)**. Between them you do not stop.
 
+## When to use this
+
+Development work that takes several steps and produces one deliverable — a feature, a refactor,
+a multi-file change.
+
+## When not to use this
+
+- A typo, a one-line change, a rename. Record it in the commit message and move on.
+- A question that can simply be answered. Answer it.
+- A bug or a failing test — that is the `investigate` skill, and it comes first.
+- Several independent deliverables in one request. Propose splitting before writing anything;
+  one plan produces one working deliverable.
+
 ## 1. Define the task
 
 Agree on the goal and the scope with the user. Where something is uncertain, ask rather than
@@ -43,6 +56,12 @@ state at a glance:
 In: <...>
 Out: <...>
 
+## Design
+<Delete this heading unless a trigger below applies.>
+- Approach: <the one chosen>
+- Rejected: <alternative — why not>  (at least two, or say why only one was viable)
+- Interfaces / data shapes: <signatures, schemas, module boundaries>
+
 ## Steps
 ### 1. <step name>
 - Deliverable: <file / capability>
@@ -53,6 +72,23 @@ Out: <...>
 ## Risks / unverified
 - <items marked "unverified">
 ```
+
+**`## Design` is off by default.** For most work the step list *is* the design. Write the
+section only when one of these holds:
+
+- a new module or subsystem appears
+- a public interface or a persisted data shape is defined or changed
+- a dependency is chosen
+- the decision is expensive to reverse
+
+Keep it under a screen. If it needs more, the task is too big for one plan — split it rather
+than growing a second document. At report time the rejected alternatives are what feeds
+`docs/decisions/`, so the section is written once and reused.
+
+**Quality bars.** A plan is ready when every step names a deliverable and a command that
+verifies it; claims about the codebase cite file and line rather than recollection; and
+acceptance is stated as something runnable, never as an adjective — "fast" becomes
+"p99 under 200 ms".
 
 Once written, **wait for the user's approval. This is the only up-front gate.** Ending the turn
 here is the correct move, not a failure to finish — the plan stays in `draft/` precisely so that
@@ -103,7 +139,10 @@ edge cases, security problems, and simpler alternatives, then report them. Do no
   Mark anything you could not confirm as "unverified".
 - Update `HANDOFF.md` — keep exactly one snapshot: overview / done / in progress / next /
   cautions. Overwrite it rather than appending.
-- Record key decisions in `docs/decisions/` (context plus the alternatives you rejected).
+- Record key decisions in `docs/decisions/` (context plus the alternatives you rejected). When
+  the plan carried a `## Design` section, that section is the source — do not rewrite it from memory.
+- Verification output can carry live credentials. Mask any secret to its first and last four
+  characters before it reaches the report, `HANDOFF.md`, or a commit message.
 - Move the finished plan from `docs/plans/approved/` to `docs/plans/archives/` and commit.
 - **The user decides completion.** Never declare it yourself.
 
@@ -129,3 +168,14 @@ A new session starts by reading `HANDOFF.md` → the plan in progress, in that o
 phasprint neither reads nor writes `CLAUDE.md`. The core rules arrive through the SessionStart
 hook and the cycle lives in this skill, so the harness is whole on its own — nothing degrades
 when that file is absent, and nothing is inherited when another plugin has rewritten it.
+
+## Checklist
+
+- [ ] The plan was approved before any source file changed
+- [ ] Every step has a deliverable and a verification command that was actually run
+- [ ] The full existing suite passes, not only the new tests
+- [ ] The adversarial review was performed and its findings reported, not just "it seems to work"
+- [ ] Anything unconfirmed is labelled "unverified"
+- [ ] `HANDOFF.md` holds one snapshot, overwritten rather than appended
+- [ ] The finished plan moved to `docs/plans/archives/`
+- [ ] No secret appears unmasked in any file, commit message, or report

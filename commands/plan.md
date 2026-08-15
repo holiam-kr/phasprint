@@ -1,5 +1,5 @@
 ---
-description: "Write a plan and get it approved. Argument: <task description>"
+description: "Write a plan and get it approved. Argument: <task description> 한국어 - 계획 세워줘, 계획서 작성."
 ---
 
 Carry out steps 1-2 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
@@ -10,3 +10,5 @@ Carry out steps 1-2 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
 - Wait for the user's approval once it is written. Do not start implementing before approval.
 - Leave the file in `draft/`. `/go` moves it to `docs/plans/approved/`, so invoking `/go` is the
   approval — and while it sits in `draft/` the hooks will not push you toward completion.
+- If `${CLAUDE_PLUGIN_ROOT}` above is not a readable path, it was not expanded: locate the
+  phasprint plugin under the installed plugin directory and read the skill from there.

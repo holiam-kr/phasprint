@@ -1,9 +1,23 @@
 {
   "name": "phasprint",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Agree on the design, then run the implementation to completion. A task harness that collapses approval into a single plan gate, then stops only on explicit stop conditions. Core rules ship via a SessionStart hook — no config to edit.",
   "author": {
     "name": "holiam",
     "email": "holiam.kr@gmail.com"
-  }
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/holiam-kr/phasprint",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holiam-kr/phasprint.git"
+  },
+  "keywords": [
+    "harness",
+    "workflow",
+    "planning",
+    "verification",
+    "hooks",
+    "task-cycle"
+  ]
 }

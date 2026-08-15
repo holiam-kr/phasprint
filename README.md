@@ -46,7 +46,7 @@ files, commits, commands, logs, or subagent prompts.
 **That's all.** No config to edit, no script to run.
 
 - The **core rules** (evidence, scope, who decides completion, stop conditions, secret
-  masking, abbreviation spelling, debugging entry point, isolation) are injected by a
+  masking, debugging entry point, isolation) are injected by a
   `SessionStart` hook on every session. They apply everywhere immediately and never touch
   `CLAUDE.md` — phasprint does not read that file either, so the harness is whole on its own
   and inherits nothing from a plugin that has rewritten it.
@@ -57,11 +57,16 @@ files, commits, commands, logs, or subagent prompts.
 
 | Layer | Contents | Loaded when | Scope |
 |---|---|---|---|
-| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), secret masking, abbreviation spelling, debugging entry point, isolation | automatically at session start | every project |
+| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), secret masking, debugging entry point, isolation | automatically at session start | every project |
 | **cycle** | plan → run to completion → adversarial review → report, document layout, `HANDOFF.md` | on `/plan` or skill trigger | only repos that use it |
 
 core contains no plan requirement, so throwaway scripts and exploration repos are never
 nagged to create `docs/plans/`.
+
+**What earns a place in core:** a behavioural rule that holds in every project and whose absence
+lets real damage through. Not document requirements, not per-situation procedure — those belong
+to the cycle or to a skill, which load only when they apply. Every line is paid for on every
+session and again on every compaction, so adding a rule means naming the one it replaces.
 
 > **Note:** Phasprint is designed to **replace** fablize / superpowers. Running them together
 > reintroduces the conflicts around the trivial-work exception and document paths. Disable

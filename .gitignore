@@ -1,5 +1,6 @@
-# Working documents (plans, progress notes, decisions)
-docs/
+# docs/ is tracked on purpose. Plans, decisions and reviews are the record that lets a new
+# session pick up where the last one stopped -- ignoring them defeats the reason they exist.
+# docs/working/ holds transient notes; prune it by hand rather than by .gitignore.
 
 # Windows
 Thumbs.db

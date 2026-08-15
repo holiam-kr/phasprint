@@ -9,6 +9,16 @@
  *
  * The plan cycle (plan -> run to completion -> HANDOFF) does not belong here.
  * That loads only when the /plan command or the sprint skill is invoked.
+ *
+ * What earns a place in CORE: a behavioural rule that holds in every project, whose absence
+ * would let real damage through. Not document requirements, not per-situation procedure --
+ * those belong to the cycle or to a skill, which load only when they apply.
+ *
+ * Every line here is paid for on every session and again on every compaction, so adding a rule
+ * means naming the one it replaces. Seven sharp rules outrank nine diluted ones: an "Abbreviations"
+ * rule was removed for exactly this reason -- its trigger ("has the user used the short form?")
+ * lived only in conversation history, so compaction erased the very thing it depended on, while
+ * it fired more often than any other rule and guarded the least.
  */
 
 const CORE = [
@@ -22,8 +32,7 @@ const CORE = [
   '  2. A blocker -- a missing dependency or credential, or an ambiguous instruction',
   '  3. A destructive action is needed -- force push, `reset --hard`, bulk file deletion, discarding uncommitted work. Never revert changes you did not make.',
   '- **Secrets** -- The moment a secret value lands in context -- an API key, token, password, private key, credential-bearing URL, `.env` value -- mask it from that point on. Reproduce it only as its first 4 and last 4 characters (`sk-ab...3f9k`), and not at all when it is shorter than 12. That holds everywhere the value can travel: replies, files, commit messages, shell commands, logs, and subagent prompts. Prefer commands that never print it in the first place -- list key names, not values -- and never write a real secret into a plan, `HANDOFF.md`, a document, or anything git tracks.',
-  '- **Abbreviations** -- Until the user has used a short form themselves, spell it out on first use with the short form in parentheses -- "Time To First Byte (TTFB)" -- and only use it bare after that. This covers acronyms and any label you coined yourself, such as the numbered findings in a review. Once the user has used the short form, drop the expansion. The one exception is a short form more widely recognized than its own expansion (`API`, `URL`, `HTML`, `JSON`).',
-  '- **Debugging** -- For bugs, test failures, or unexplained behavior, follow the `investigate` skill before writing a single line of fix: reproduce first -> three or more competing hypotheses -> evidence per hypothesis -> the full causal chain -> verify before and after the fix -> report the hypotheses you rejected as well.',
+  '- **Debugging** -- For bugs, test failures, or unexplained behavior, follow the `investigate` skill before writing a single line of fix: reproduce first -> three or more competing hypotheses -> evidence per hypothesis -> the full causal chain -> verify before and after the fix -> report the hypotheses you rejected as well. Skip it only when the cause is already visible and the fix is trivial -- a typo, a missing import the error names outright.',
   '- **Isolation** -- Use a branch or worktree only for risky work such as large refactors or experimental changes. Do not spin up an isolated workspace for routine work.',
   '',
   'To run multi-step work through the plan -> completion -> report cycle, use `/plan <task>`.',

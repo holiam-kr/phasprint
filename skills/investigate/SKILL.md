@@ -8,12 +8,27 @@ description: Use when investigating a bug, a test failure, or unexplained behavi
 **Finish this procedure before writing a single line of fix.** Fix what you can see and only
 the symptom goes away.
 
+## When to use this
+
+A bug, a failing test, or behaviour nobody can explain — whenever the cause is not already in
+front of you.
+
+## When not to use this
+
+Skip the protocol when the cause is visible and the fix is trivial: a typo, an off-by-one in
+code you wrote this turn, a missing import the error names outright, a failure whose message
+states the remedy. Fix it, verify it, move on. Three hypotheses for a typo is ceremony, and this
+skill exists to stop guessing, not to slow down seeing.
+
+If you are unsure whether it qualifies, it does not — run the protocol.
+
 ## 1. Reproduce first
 
 - Find and run the command that reproduces the failure, and capture the **actual output**.
-  If you cannot reproduce it, do not start investigating.
-- When it will not reproduce, report that fact itself (suspect environment differences,
-  timing, or data dependence). Do not move on with a guess.
+  Reproduce before you theorise, and never write a fix for something you have not watched fail.
+- When it will not reproduce, that **is** the finding, not the end of the investigation. Say so
+  plainly and turn the question around: why does it reproduce elsewhere and not here —
+  environment, timing, ordering, or data dependence? Keep investigating; just do not fix blind.
 - Write the reproduction command down. You will run it again to verify the fix.
 
 ## 2. Three or more competing hypotheses
@@ -30,6 +45,9 @@ the symptom goes away.
   breakpoints, a minimal reproduction, bisection (`git bisect`), input reduction.
 - Evidence must be execution output. Reading the code and concluding "it's probably this"
   is not evidence.
+- Captured output travels into the report and `HANDOFF.md`. Authentication failures are among
+  the most common things anyone debugs, and their output carries live credentials — mask any
+  secret to its first and last four characters before it goes anywhere.
 - Keep the hypotheses you rejected and why. They go in the final report.
 
 ## 4. The full causal chain
@@ -58,3 +76,14 @@ the symptom goes away.
 
 - If two attempts fail to narrow the cause, stop. Report the hypotheses, the evidence so far,
   and where you are stuck, then ask the user. Do not keep guessing.
+
+## Checklist
+
+- [ ] The failure was reproduced and its actual output captured — or the non-reproduction is
+      itself reported as a finding
+- [ ] Three or more hypotheses were formed before any one was chased
+- [ ] Each hypothesis was met with execution output, not with a reading of the code
+- [ ] The causal chain runs end to end with no "and then somewhere around here"
+- [ ] The reproduction command was run before and after the fix, both outputs captured
+- [ ] The report names the rejected hypotheses and what rejected them
+- [ ] No secret appears unmasked in the report or in any file it touched

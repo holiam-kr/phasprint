@@ -47,6 +47,32 @@ function readStdin() {
   }
 }
 
+const MARKER_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Best effort, and deliberately silent: a marker older than a week belongs to a session that
+// ended long ago. Letting them pile up cost nothing directly, but it left the temp directory
+// full of look-alike files, which is part of why the 2026-08-15 anomaly took so long to narrow.
+// A session idle for more than a week loses its guard and may nudge once more; that is cheaper
+// than unbounded growth.
+function sweepStaleMarkers(dir) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch (_) {
+    return;
+  }
+  const cutoff = Date.now() - MARKER_TTL_MS;
+  for (const name of names) {
+    if (!name.endsWith('.stop')) continue;
+    const file = path.join(dir, name);
+    try {
+      if (fs.statSync(file).mtimeMs < cutoff) fs.unlinkSync(file);
+    } catch (_) {
+      // raced with another session, or already gone -- either way, not our problem
+    }
+  }
+}
+
 function sessionMarker(dir, sessionId) {
   if (!sessionId) return null;
   return path.join(dir, String(sessionId).replace(/[^A-Za-z0-9._-]/g, '_') + '.stop');
@@ -149,6 +175,7 @@ function main() {
   // Once per session -- keep the marker in the temp dir so the repository stays clean.
   const markerDir = path.join(os.tmpdir(), 'phasprint');
   fs.mkdirSync(markerDir, { recursive: true });
+  sweepStaleMarkers(markerDir);
 
   if (alreadyFired(markerDir, input.session_id, cwd)) return;
   const markerFailure = recordFired(markerDir, input.session_id, cwd);

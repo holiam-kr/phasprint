@@ -16,10 +16,51 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 function expectedMissing(err) {
   return !!err && (err.code === 'ENOENT' || err.code === 'ENOTDIR');
+}
+
+const MAX_HOPS = 8;
+
+function exists(target) {
+  try {
+    return fs.existsSync(target);
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
+ * Finds docs/plans/ by walking up from cwd, because a session opened in a subpackage of a
+ * monorepo would otherwise see no plans at all and the hooks would go silent for the wrong
+ * reason.
+ *
+ * The walk stops at the repository root: a directory holding .git is the last one examined.
+ * Without that boundary a session in some unrelated folder could bind itself to a parent
+ * directory's plans and start pushing to finish work nobody asked about. The home directory
+ * and the filesystem root are hard stops for the same reason.
+ */
+function findPlansDir(cwd) {
+  let dir;
+  try {
+    dir = path.resolve(cwd);
+  } catch (_) {
+    return null;
+  }
+  const home = path.resolve(os.homedir());
+
+  for (let hop = 0; hop <= MAX_HOPS; hop++) {
+    const candidate = path.join(dir, 'docs', 'plans');
+    if (exists(candidate)) return candidate;
+    if (exists(path.join(dir, '.git'))) break; // repository root -- never look outside it
+    const parent = path.dirname(dir);
+    if (parent === dir || dir === home) break;
+    dir = parent;
+  }
+  return null;
 }
 
 function listPlansIn(dir) {
@@ -37,7 +78,9 @@ function listPlansIn(dir) {
 
 /** Plans the hooks are allowed to act on. Approved only. */
 function activePlans(cwd) {
-  return listPlansIn(path.join(cwd, 'docs', 'plans', 'approved'));
+  const plansDir = findPlansDir(cwd);
+  if (!plansDir) return [];
+  return listPlansIn(path.join(plansDir, 'approved'));
 }
 
-module.exports = { activePlans, expectedMissing };
+module.exports = { activePlans, findPlansDir, expectedMissing };

@@ -80,9 +80,17 @@ process.on('exit', () => {
 test('core: injects every rule and exits 0', () => {
   const { out, code } = run('core.cjs', {});
   assert.equal(code, 0);
-  for (const rule of ['Evidence', 'Scope', 'Verdict', 'Stop', 'Secrets', 'Abbreviations', 'Debugging', 'Isolation']) {
+  for (const rule of ['Evidence', 'Scope', 'Verdict', 'Stop', 'Secrets', 'Debugging', 'Isolation']) {
     assert.match(out, new RegExp(`\\*\\*${rule}\\*\\*`), `missing rule: ${rule}`);
   }
+});
+
+// Not a style check. core is injected on every session and again on every compaction, so a rule
+// may only be added by naming the one it replaces -- changing this number should be deliberate.
+test('core holds exactly seven rules', () => {
+  const { out } = run('core.cjs', {});
+  const bullets = out.match(/^- \*\*\w+\*\*/gm) || [];
+  assert.equal(bullets.length, 7, `core has ${bullets.length} rules: ${bullets.join(', ')}`);
 });
 
 test('core: output stays ASCII-only', () => {
@@ -246,4 +254,68 @@ test('finish-gate: a marker that vanishes without an error is still caught', () 
   assert.equal(code, 0);
   assert.equal(json.decision, 'block');
   assert.match(json.systemMessage, /did not persist/);
+});
+
+test('finish-gate: markers older than a week are swept away, recent ones survive', () => {
+  const cwd = repo({ approved: ['task_001.md'] });
+  const tmp = scratch('tmp');
+  const markerDir = path.join(tmp, 'phasprint');
+  fs.mkdirSync(markerDir, { recursive: true });
+
+  const stale = path.join(markerDir, 'ancient-session.stop');
+  const fresh = path.join(markerDir, 'recent-session.stop');
+  fs.writeFileSync(stale, '');
+  fs.writeFileSync(fresh, '');
+  const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+  fs.utimesSync(stale, eightDaysAgo, eightDaysAgo);
+
+  run('finish-gate.cjs', { session_id: 'AAA', cwd }, tmp);
+  assert.equal(fs.existsSync(stale), false, 'a week-old marker should be gone');
+  assert.equal(fs.existsSync(fresh), true, 'a fresh marker must survive');
+});
+
+test('finish-gate: the sweep leaves non-marker files alone', () => {
+  const cwd = repo({ approved: ['task_001.md'] });
+  const tmp = scratch('tmp');
+  const markerDir = path.join(tmp, 'phasprint');
+  fs.mkdirSync(markerDir, { recursive: true });
+  const bystander = path.join(markerDir, 'notes.txt');
+  fs.writeFileSync(bystander, 'keep me');
+  const old = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  fs.utimesSync(bystander, old, old);
+
+  run('finish-gate.cjs', { session_id: 'AAA', cwd }, tmp);
+  assert.equal(fs.readFileSync(bystander, 'utf8'), 'keep me');
+});
+
+// A session opened in a subpackage of a monorepo used to see no plans at all, so the hooks went
+// silent for the wrong reason.
+test('gate: an approved plan is found from a subdirectory', () => {
+  const root = repo({ approved: ['task_009.md'] });
+  fs.mkdirSync(path.join(root, '.git'), { recursive: true });
+  const deep = path.join(root, 'packages', 'web', 'src');
+  fs.mkdirSync(deep, { recursive: true });
+
+  const { out } = run('gate.cjs', { cwd: deep });
+  assert.match(out, /Approved plan: task_009\.md/);
+});
+
+// Without a boundary, a session in an unrelated folder could bind itself to a parent's plans.
+test('gate: the upward search stops at the repository root', () => {
+  const outer = repo({ approved: ['task_009.md'] });
+  const inner = path.join(outer, 'vendor', 'other-repo');
+  fs.mkdirSync(path.join(inner, '.git'), { recursive: true });
+  const deep = path.join(inner, 'src');
+  fs.mkdirSync(deep, { recursive: true });
+
+  const { out } = run('gate.cjs', { cwd: deep });
+  assert.doesNotMatch(out, /Approved plan/);
+});
+
+test('finish-gate: the same boundary applies to the Stop hook', () => {
+  const outer = repo({ approved: ['task_009.md'] });
+  const inner = path.join(outer, 'vendor', 'other-repo');
+  fs.mkdirSync(path.join(inner, '.git'), { recursive: true });
+
+  assert.equal(run('finish-gate.cjs', { session_id: 'AAA', cwd: inner }).out, '');
 });
