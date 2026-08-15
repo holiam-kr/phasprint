@@ -42,8 +42,8 @@ nothing is inherited when another plugin has rewritten it.
 
 ## In progress
 
-`docs/plans/approved/task_003.md` — closing the remaining 14 review findings across records,
-conventions, and packaging.
+Nothing. `task_001` through `task_003` are in `docs/plans/archives/`; 19 of the 20 review
+findings are closed and the twentieth is waiting on a recurrence, not on work.
 
 ## Next
 
