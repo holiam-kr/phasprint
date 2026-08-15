@@ -112,11 +112,15 @@ test('command frontmatter descriptions stay parseable', () => {
   }
 });
 
-test('every command carries a Korean trigger and the plugin-root fallback', () => {
+// ${CLAUDE_PLUGIN_ROOT} is expanded in command bodies -- confirmed by invoking /plan and seeing
+// the literal cache path in its place. A fallback for the unexpanded case was carried briefly and
+// removed: it printed on every invocation to describe a case that does not happen.
+test('every command carries a Korean trigger and points at the skill by plugin root', () => {
   for (const name of ['plan.md', 'go.md', 'report.md']) {
     const src = read(`commands/${name}`);
     assert.match(src, /한국어/, `${name} has no Korean trigger`);
-    assert.match(src, /not a readable path/, `${name} has no plugin-root fallback`);
+    assert.match(src, /\$\{CLAUDE_PLUGIN_ROOT\}\/skills\/sprint\/SKILL\.md/, `${name} does not point at the skill`);
+    assert.doesNotMatch(src, /not a readable path/, `${name} still carries the dead fallback`);
   }
 });
 

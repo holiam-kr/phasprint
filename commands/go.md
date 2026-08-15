@@ -18,5 +18,3 @@ Carry out steps 3-5 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
   renderer if there is UI).
 - If a stop condition from step 4 hits, stop immediately, say which one, and ask.
 - Once implementation is done, perform the step 5 adversarial review.
-- If `${CLAUDE_PLUGIN_ROOT}` above is not a readable path, it was not expanded: locate the
-  phasprint plugin under the installed plugin directory and read the skill from there.

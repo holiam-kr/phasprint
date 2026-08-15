@@ -34,6 +34,11 @@ nothing is inherited when another plugin has rewritten it.
   0.3.0, which is the point; the rest pin behaviour that already worked (`3003197`).
 - `activePlans()` lives once, in `hooks/lib/plans.cjs` (`3003197`).
 - phasprint no longer defers to `CLAUDE.md` (`f8875bd`).
+- **The remaining review findings are closed** (`d6af9a4`): `docs/` is tracked, `HANDOFF.md`
+  exists, core is down to seven rules, both skills carry a "when not to use this" section, the
+  plan lookup walks up to the repository root, and the suite is 37 tests.
+- `${CLAUDE_PLUGIN_ROOT}` **does** expand inside command markdown bodies — confirmed by invoking
+  `/plan` against the installed 0.5.0 and reading the cache path in its place.
 
 ## In progress
 
@@ -47,9 +52,6 @@ conventions, and packaging.
   experiment (version skew, split TMPDIR, duplicate registration, changed session id) and the
   cause is still **unverified**. The instrumentation added since would now report it; the wait
   is for a recurrence.
-- **Finding 17 stays open.** Whether `${CLAUDE_PLUGIN_ROOT}` interpolates inside command
-  markdown bodies is **unverified** — it can only be confirmed by running `/plan` in a real
-  session and watching whether the skill body loads.
 - A `PostToolUse` hook would let the Evidence rule rest on observed tool results instead of on
   the model's own claim. fablize and OMC both do this; phasprint does not. Separate task.
 
