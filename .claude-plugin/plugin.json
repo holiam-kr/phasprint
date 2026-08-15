@@ -1,6 +1,6 @@
 {
   "name": "phasprint",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Agree on the design, then run the implementation to completion. A task harness that collapses approval into a single plan gate, then stops only on explicit stop conditions. Core rules ship via a SessionStart hook — no config to edit.",
   "author": {
     "name": "holiam",

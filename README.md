@@ -71,8 +71,8 @@ nagged to create `docs/plans/`.
 
 | Command | What it does |
 |---|---|
-| `/plan <description>` | Agree on goal and scope → write `docs/plans/task_NNN.md` → wait for approval |
-| `/go [plan file]` | Implement the approved plan to completion (stops only on stop conditions) |
+| `/plan <description>` | Agree on goal and scope → write `docs/plans/draft/task_NNN.md` → wait for approval |
+| `/go [plan file]` | Approve (move `draft/` → `approved/`) and implement to completion — stops only on stop conditions |
 | `/report` | Present verification evidence → update `HANDOFF.md` → archive the plan → commit |
 
 Skills also trigger on their own, without an explicit call:
@@ -84,7 +84,7 @@ Skills also trigger on their own, without an explicit call:
 
 | Purpose | Path |
 |---|---|
-| Plan | `docs/plans/task_NNN.md` → `docs/plans/archives/` when done |
+| Plan | `docs/plans/draft/` → `approved/` on approval → `archives/` when done |
 | Progress log | `docs/working/` |
 | Decisions | `docs/decisions/` |
 | Current snapshot | `HANDOFF.md` (exactly one, overwritten rather than appended) |
@@ -95,12 +95,15 @@ Skills also trigger on their own, without an explicit call:
 |---|---|---|
 | `SessionStart` | `hooks/core.cjs` | Injects the core rules. Re-injects on `source=compact` to restore rules pushed out by compaction |
 | `UserPromptSubmit` | `hooks/gate.cjs` | Restates the core essentials in one line each turn; surfaces the active plan when there is one |
-| `Stop` | `hooks/finish-gate.cjs` | Asks back **once per session** if a turn ends while a plan is still active |
+| `Stop` | `hooks/finish-gate.cjs` | Asks back **once per session** if a turn ends while an approved plan is still open |
 
-`gate.cjs` and `finish-gate.cjs` read `docs/plans/` directly, so repos without plans never
-hear about the cycle at all.
+`gate.cjs` and `finish-gate.cjs` read `docs/plans/approved/` directly, so repos without plans
+never hear about the cycle at all. **Approval is expressed by location** — a plan waiting in
+`draft/` is invisible to both hooks, so nothing pushes toward completion before you have said
+yes. A loose `docs/plans/task_*.md` from an earlier version counts as a draft.
 
-All three fail open: any error exits 0 silently, so a hook can never block a session.
+All three fail open: any error still exits 0, so a hook can never block a session — but it now
+says what went wrong via `systemMessage` instead of failing silently.
 
 The `Stop` hook intervenes at most once per session and passes through afterwards — it nudges
 toward completion without becoming a trap. If work stopped because of a stop condition, state

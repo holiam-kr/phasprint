@@ -67,8 +67,8 @@ core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 �
 
 | 명령 | 하는 일 |
 |---|---|
-| `/plan <작업 설명>` | 목표·범위 합의 → `docs/plans/task_NNN.md` 작성 → 승인 대기 |
-| `/go [계획서]` | 승인된 계획서를 끝까지 구현 (중단 조건에만 멈춤) |
+| `/plan <작업 설명>` | 목표·범위 합의 → `docs/plans/draft/task_NNN.md` 작성 → 승인 대기 |
+| `/go [계획서]` | 승인(`draft/` → `approved/` 이동) 후 끝까지 구현 — 중단 조건에만 멈춤 |
 | `/report` | 검증 근거 제시 → `HANDOFF.md` 갱신 → 계획서 아카이브 → 커밋 |
 
 스킬은 명시적 호출 없이도 작업 성격에 따라 자동으로 걸립니다:
@@ -80,7 +80,7 @@ core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 �
 
 | 용도 | 경로 |
 |---|---|
-| 수행 계획서 | `docs/plans/task_NNN.md` → 완료 시 `docs/plans/archives/` |
+| 수행 계획서 | `docs/plans/draft/` → 승인 시 `approved/` → 완료 시 `archives/` |
 | 진행 기록 | `docs/working/` |
 | 결정 기록 | `docs/decisions/` |
 | 현재 스냅샷 | `HANDOFF.md` (단 하나, 누적하지 않고 덮어씀) |
@@ -91,12 +91,15 @@ core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 �
 |---|---|---|
 | `SessionStart` | `hooks/core.cjs` | core 규칙을 주입. `source=compact` 에도 다시 주입해 압축으로 밀려난 규칙을 복구 |
 | `UserPromptSubmit` | `hooks/gate.cjs` | core 핵심을 한 줄로 매 턴 상기. 활성 계획서가 있으면 함께 올림 |
-| `Stop` | `hooks/finish-gate.cjs` | 활성 계획서가 남은 채 끝내려 하면 **세션당 1회만** 되물음 |
+| `Stop` | `hooks/finish-gate.cjs` | 승인된 계획서가 남은 채 끝내려 하면 **세션당 1회만** 되물음 |
 
-`gate.cjs` 와 `finish-gate.cjs` 는 `docs/plans/` 를 실제로 읽어 판단하므로, 계획서가 없는
-리포에서는 사이클을 일절 언급하지 않습니다.
+`gate.cjs` 와 `finish-gate.cjs` 는 `docs/plans/approved/` 를 실제로 읽어 판단하므로, 계획서가
+없는 리포에서는 사이클을 일절 언급하지 않습니다. **승인 상태는 파일 위치로 표현됩니다** —
+`draft/` 에서 대기 중인 계획서는 두 훅에 보이지 않으므로, 승인 전에 완주를 미는 일이 없습니다.
+이전 버전의 `docs/plans/task_*.md` 직속 파일은 draft 로 간주합니다.
 
-셋 다 fail-open입니다 — 어떤 오류에서도 조용히 exit 0 하므로 훅이 세션을 막는 일이 없습니다.
+셋 다 fail-open입니다 — 어떤 오류에서도 exit 0 하므로 훅이 세션을 막지 않습니다. 다만 이제
+조용히 넘어가지 않고 `systemMessage` 로 무엇이 실패했는지 알립니다.
 
 `Stop` 훅은 세션당 한 번만 개입하고 그 뒤로는 항상 통과시킵니다 — 완주를 유도하되 함정이
 되지 않게 하기 위함입니다. 중단 조건에 해당해 멈춘 것이라면 사유를 밝히고 그대로 끝내면 됩니다.

@@ -29,10 +29,22 @@ const CORE = [
   'To run multi-step work through the plan -> completion -> report cycle, use `/plan <task>`.',
 ].join('\n');
 
-// Fail open: a hook must never block the session. Any error here exits 0 silently.
+// Fail open, but never silently: the hook still exits 0 on any error, and says why.
+// A silent fail-open buys "the session never blocks" at the price of "nobody can tell it broke".
+// The only thing that can fail here is the write itself, so the report may not land either --
+// it costs nothing and keeps the three hooks consistent.
+function failOpen(err) {
+  try {
+    const detail = err && err.stack ? err.stack.split('\n')[0] : String(err);
+    process.stdout.write(JSON.stringify({ systemMessage: 'phasprint core hook failed open: ' + detail }) + '\n');
+  } catch (_) {
+    // stdout itself is gone -- nothing left to say it with
+  }
+}
+
 try {
   process.stdout.write(CORE + '\n');
-} catch (_) {
-  // ignore
+} catch (err) {
+  failOpen(err);
 }
 process.exit(0);

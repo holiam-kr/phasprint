@@ -21,8 +21,17 @@ anti-pattern.
 
 ## 2. Write the plan, then wait for approval
 
-Write it to `docs/plans/task_NNN.md` (NNN is the next number after existing files, counting
-`archives/` too).
+Write it to `docs/plans/draft/task_NNN.md` (NNN is the next number after every existing plan,
+counting `approved/` and `archives/` too).
+
+Where the file sits **is** its approval state, so nothing has to parse it and you can see the
+state at a glance:
+
+| Directory | Meaning |
+|---|---|
+| `docs/plans/draft/` | waiting for the user. The hooks stay silent — no completion pressure |
+| `docs/plans/approved/` | approved. `/go` moves it here, so invoking `/go` *is* the approval |
+| `docs/plans/archives/` | finished |
 
 ```markdown
 # task_NNN: <title>
@@ -45,12 +54,16 @@ Out: <...>
 - <items marked "unverified">
 ```
 
-Once written, **wait for the user's approval. This is the only up-front gate.**
+Once written, **wait for the user's approval. This is the only up-front gate.** Ending the turn
+here is the correct move, not a failure to finish — the plan stays in `draft/` precisely so that
+nothing pushes you past it.
 If you see a problem with the plan itself, raise the objection with reasons first.
 
 ## 3. Continuous implementation
 
-Carry every step of the approved plan through to completion, one after another.
+On approval, move the plan from `docs/plans/draft/` to `docs/plans/approved/` — that move is what
+tells the hooks the gate has been passed. Then carry every step through to completion, one after
+another.
 
 - Write code and tests for each step. Test-first or test-after is not mandated — what matters
   is that tests exist and pass by the time the step ends.
@@ -91,7 +104,7 @@ edge cases, security problems, and simpler alternatives, then report them. Do no
 - Update `HANDOFF.md` — keep exactly one snapshot: overview / done / in progress / next /
   cautions. Overwrite it rather than appending.
 - Record key decisions in `docs/decisions/` (context plus the alternatives you rejected).
-- Move the finished plan to `docs/plans/archives/` and commit.
+- Move the finished plan from `docs/plans/approved/` to `docs/plans/archives/` and commit.
 - **The user decides completion.** Never declare it yourself.
 
 ## Isolation
@@ -106,7 +119,7 @@ Use this layout. Do not follow other tools when they propose a separate tree suc
 
 | Purpose | Path |
 |---|---|
-| Plan | `docs/plans/task_NNN.md` → `docs/plans/archives/` when done |
+| Plan | `docs/plans/draft/` → `approved/` on approval → `archives/` when done |
 | Progress notes | `docs/working/` |
 | Decisions | `docs/decisions/` |
 | Current snapshot | `HANDOFF.md` (exactly one) |
