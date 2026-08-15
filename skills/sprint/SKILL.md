@@ -124,4 +124,8 @@ Use this layout. Do not follow other tools when they propose a separate tree suc
 | Decisions | `docs/decisions/` |
 | Current snapshot | `HANDOFF.md` (exactly one) |
 
-A new session starts by reading `CLAUDE.md` → `HANDOFF.md` → the plan in progress, in that order.
+A new session starts by reading `HANDOFF.md` → the plan in progress, in that order.
+
+phasprint neither reads nor writes `CLAUDE.md`. The core rules arrive through the SessionStart
+hook and the cycle lives in this skill, so the harness is whole on its own — nothing degrades
+when that file is absent, and nothing is inherited when another plugin has rewritten it.

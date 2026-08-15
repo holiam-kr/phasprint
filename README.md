@@ -48,7 +48,8 @@ files, commits, commands, logs, or subagent prompts.
 - The **core rules** (evidence, scope, who decides completion, stop conditions, secret
   masking, abbreviation spelling, debugging entry point, isolation) are injected by a
   `SessionStart` hook on every session. They apply everywhere immediately and never touch
-  `CLAUDE.md`.
+  `CLAUDE.md` — phasprint does not read that file either, so the harness is whole on its own
+  and inherits nothing from a plugin that has rewritten it.
 - The **plan cycle** loads only when you call `/plan` or the `sprint` skill triggers.
   Repos that don't use plans are never asked for one.
 
