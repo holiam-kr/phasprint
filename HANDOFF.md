@@ -37,13 +37,16 @@ nothing is inherited when another plugin has rewritten it.
 - **The remaining review findings are closed** (`d6af9a4`): `docs/` is tracked, `HANDOFF.md`
   exists, core is down to seven rules, both skills carry a "when not to use this" section, the
   plan lookup walks up to the repository root, and the suite is 37 tests.
+- **Tool results are observed** (`observe.cjs`, `PostToolUse` + `PostToolUseFailure`). Which
+  event arrives is the verdict — Claude Code raises `PostToolUse` only for calls that succeeded,
+  so nothing is parsed out of output text. The Stop nudge now states what was observed.
 - `${CLAUDE_PLUGIN_ROOT}` **does** expand inside command markdown bodies — confirmed by invoking
   `/plan` against the installed 0.5.0 and reading the cache path in its place.
 
 ## In progress
 
-Nothing. `task_001` through `task_003` are in `docs/plans/archives/`; 19 of the 20 review
-findings are closed and the twentieth is waiting on a recurrence, not on work.
+`docs/plans/approved/task_004.md` — the observation hook. Implemented and tested; **one
+verification is outstanding**, see Next.
 
 ## Next
 
@@ -52,8 +55,14 @@ findings are closed and the twentieth is waiting on a recurrence, not on work.
   experiment (version skew, split TMPDIR, duplicate registration, changed session id) and the
   cause is still **unverified**. The instrumentation added since would now report it; the wait
   is for a recurrence.
-- A `PostToolUse` hook would let the Evidence rule rest on observed tool results instead of on
-  the model's own claim. fablize and OMC both do this; phasprint does not. Separate task.
+- **The `PostToolUseFailure` payload has never been seen.** `observe.cjs` decides success by
+  `hook_event_name !== 'PostToolUseFailure'`, which assumes that event carries the same envelope
+  as `PostToolUse`. That assumption is **unverified** — the same class of assumption that step 1
+  disproved for exit codes. Confirm by reloading the plugin with recording on
+  (`touch $TMPDIR/phasprint/record.on`) and running a command that exits non-zero.
+- Whether observing is worth its cost is **unmeasured**. One extra process per Bash/Edit/Write
+  call, and fablize's measurement protocol warns a gate can be net negative by filling context
+  with noise.
 
 ## Cautions
 

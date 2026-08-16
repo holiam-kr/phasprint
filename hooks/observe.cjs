@@ -1,32 +1,32 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * phasprint PostToolUse hook -- observation only.
+ * phasprint PostToolUse / PostToolUseFailure hook -- observation only.
  *
- * The core Evidence rule ("cite output from a command you actually ran") currently exists as a
- * request to the model and nothing more. This hook is the first half of making it checkable:
- * it watches what tools actually did, so a claim can be compared against a record instead of
- * being taken at face value.
+ * The core Evidence rule ("cite output from a command you actually ran") existed only as a
+ * request to the model. This records what the tools actually did, so the claim can be checked
+ * against something.
  *
  * It writes nothing to stdout on the normal path. A hook that speaks after every tool call
  * would cost more attention than the rule it protects.
  *
- * Right now it only records raw payloads, and only when recording is switched on. The field
- * names a parser would need -- where the exit code lives, how success is expressed -- are not
- * documented anywhere we can rely on, and guessing a schema is exactly how the plugin manifest
- * was broken. So: capture first, parse second.
+ * Which event arrives is the verdict: Claude Code raises PostToolUse only for calls that
+ * succeeded, and PostToolUseFailure for the rest. Nothing is inferred from output text --
+ * measured on 2026-08-16, `tool_response` for Bash is {stdout, stderr, interrupted, isImage,
+ * noOutputExpected} with no exit code anywhere, and a command exiting non-zero produces no
+ * PostToolUse event at all.
  *
- * Recording is on when either is true:
- *   - PHASPRINT_RECORD is set in the environment
- *   - a file named `record.on` exists in the marker directory
- * The flag file exists because hook environments are set by Claude Code, not by whoever wants
- * the recording -- a file is something you can actually switch on from a shell.
+ * Recording of raw payloads (for working out shapes like the above) stays available behind
+ * PHASPRINT_RECORD or a `record.on` file in the marker directory. Hook environments are set by
+ * Claude Code, so the file is the switch you can actually reach from a shell.
  */
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
-const { maskDeep } = require('./lib/mask.cjs');
+const { maskDeep, mask } = require('./lib/mask.cjs');
+const { update, markerDir, classifyPath, isVerification } = require('./lib/ledger.cjs');
+
+const MUTATING_TOOLS = new Set(['Edit', 'Write', 'NotebookEdit', 'MultiEdit']);
 
 function failOpen(err) {
   try {
@@ -47,10 +47,6 @@ function readStdin() {
   }
 }
 
-function markerDir() {
-  return path.join(os.tmpdir(), 'phasprint');
-}
-
 function recordingEnabled(dir) {
   if (process.env.PHASPRINT_RECORD) return true;
   try {
@@ -60,21 +56,55 @@ function recordingEnabled(dir) {
   }
 }
 
-function main() {
-  const raw = readStdin(); // always drain stdin, even when idle, so the writer never blocks
-  const dir = markerDir();
-  if (!recordingEnabled(dir)) return;
+function recordRaw(dir, payload) {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const line = JSON.stringify({ at: new Date().toISOString(), payload: maskDeep(payload) });
+    fs.appendFileSync(path.join(dir, 'record.jsonl'), line + '\n');
+  } catch (_) {
+    // recording is a debugging aid; never let it disturb the turn
+  }
+}
 
+function main() {
+  const raw = readStdin(); // always drain stdin so the writer never blocks
   let payload;
   try {
     payload = JSON.parse(raw);
   } catch (_) {
-    payload = { _unparsed: raw.slice(0, 2000) };
+    return; // nothing observable in a payload we cannot read
   }
+  if (!payload || typeof payload !== 'object') return;
 
-  fs.mkdirSync(dir, { recursive: true });
-  const line = JSON.stringify({ at: new Date().toISOString(), payload: maskDeep(payload) });
-  fs.appendFileSync(path.join(dir, 'record.jsonl'), line + '\n');
+  const dir = markerDir();
+  if (recordingEnabled(dir)) recordRaw(dir, payload);
+
+  const succeeded = payload.hook_event_name !== 'PostToolUseFailure';
+  const tool = String(payload.tool_name || '');
+  const input = payload.tool_input && typeof payload.tool_input === 'object' ? payload.tool_input : {};
+
+  const verification =
+    tool === 'Bash' && isVerification(input.command)
+      ? mask(String(input.command)).slice(0, 200)
+      : null;
+
+  const { error } = update(payload.session_id, payload.cwd, payload.prompt_id, (ledger) => {
+    // A verification that ran and failed is a different fact from one that never ran, and the
+    // difference is the whole point of the ledger -- record both outcomes.
+    if (verification) ledger.verifications.push({ command: verification, ok: succeeded });
+    if (!succeeded) {
+      ledger.failures += 1;
+      return; // a failed call changed nothing
+    }
+    if (MUTATING_TOOLS.has(tool) && input.file_path) {
+      ledger.changed = true;
+      ledger.change_kinds.push(classifyPath(input.file_path));
+    }
+  });
+
+  if (error) {
+    process.stdout.write(JSON.stringify({ systemMessage: 'phasprint observe: ' + error }) + '\n');
+  }
 }
 
 try {

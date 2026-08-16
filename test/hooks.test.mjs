@@ -319,3 +319,44 @@ test('finish-gate: the same boundary applies to the Stop hook', () => {
 
   assert.equal(run('finish-gate.cjs', { session_id: 'AAA', cwd: inner }).out, '');
 });
+
+// The Stop nudge used to be generic. It now states what was actually observed, which is the
+// point of the observation hook -- but it must not become a second stop condition.
+test('finish-gate: the nudge reports what was observed this turn', () => {
+  const cwd = repo({ approved: ['task_001.md'] });
+  const tmp = scratch('tmp');
+  const obs = (payload) =>
+    spawnSync(process.execPath, [path.join(HOOKS, 'observe.cjs')], {
+      input: JSON.stringify(payload),
+      encoding: 'utf8',
+      env: { ...process.env, TMPDIR: tmp },
+    });
+
+  obs({ hook_event_name: 'PostToolUse', session_id: 'AAA', cwd, prompt_id: 'p1',
+        tool_name: 'Write', tool_input: { file_path: '/x/a.ts' } });
+
+  const { json } = run('finish-gate.cjs', { session_id: 'AAA', cwd }, tmp);
+  assert.equal(json.decision, 'block');
+  assert.match(json.reason, /Observed this turn: files changed \(code\); no verification command/);
+});
+
+test('finish-gate: with no ledger the nudge still stands', () => {
+  const cwd = repo({ approved: ['task_001.md'] });
+  const { json } = run('finish-gate.cjs', { session_id: 'AAA', cwd });
+  assert.equal(json.decision, 'block');
+  assert.doesNotMatch(json.reason, /Observed this turn/);
+});
+
+test('finish-gate: stale ledgers are swept like markers', () => {
+  const cwd = repo({ approved: ['task_001.md'] });
+  const tmp = scratch('tmp');
+  const markerDir = path.join(tmp, 'phasprint');
+  fs.mkdirSync(markerDir, { recursive: true });
+  const oldLedger = path.join(markerDir, 'ledger-deadbeefdeadbeef.json');
+  fs.writeFileSync(oldLedger, '{}');
+  const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+  fs.utimesSync(oldLedger, eightDaysAgo, eightDaysAgo);
+
+  run('finish-gate.cjs', { session_id: 'AAA', cwd }, tmp);
+  assert.equal(fs.existsSync(oldLedger), false, 'a week-old ledger should be gone');
+});

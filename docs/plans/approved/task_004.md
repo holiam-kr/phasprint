@@ -19,9 +19,9 @@ ledger state — never from the assistant's claim text."*
 |---|---|
 | `hooks/observe.cjs` (신규) | `PostToolUse` — 도구 결과를 원장에 적립. **출력 없음** |
 | `hooks/lib/ledger.cjs` (신규) | 턴 단위 원장 읽기·쓰기·리셋 |
-| `hooks/gate.cjs` | 매 턴 원장 리셋 (이미 `UserPromptSubmit` 에서 돈다) |
+| ~~`hooks/gate.cjs`~~ | ~~매 턴 원장 리셋~~ — `prompt_id` 로 대체되어 불필요 |
 | `hooks/finish-gate.cjs` | 되물음 문구에 **관측된 사실**을 넣는다 |
-| `hooks/hooks.json` | `PostToolUse` 등록 |
+| `hooks/hooks.json` | `PostToolUse` **및 `PostToolUseFailure`** 등록 |
 | `test/` | 원장·파서 표 기반 테스트 |
 | README 2종 · `HANDOFF.md` · 0.6.0 | 문서 |
 
@@ -88,6 +88,39 @@ SUCCESS_RE = r"(?i)\b(passed|success|...|0 failed|...)\b"
 `tool_input.file_path`(Edit/Write), `tool_response` 아래의 `exit_code`/`exitCode`/`returncode`/
 `status`/`success`/`ok`. **이 목록은 fablize 소스에서 온 것이지 실측이 아니다.** 그래서 1단계가
 실제 페이로드 확보다.
+
+---
+
+## Design 수정 (1단계 실측 후, 사용자 승인 2026-08-16)
+
+1단계가 위 가정을 반증했다. 실측 페이로드:
+
+```
+session_id · transcript_path · cwd · prompt_id · permission_mode · effort
+hook_event_name · tool_name · tool_input · tool_response · tool_use_id · duration_ms
+
+Bash  tool_response = {stdout, stderr, interrupted, isImage, noOutputExpected}
+Write tool_response = {type:"create", filePath, content, structuredPatch, originalFile, userModified}
+```
+
+| 가정 | 실제 |
+|---|---|
+| `exit_code`/`success`/`status` 필드 | **없다** |
+| `stderr` 에 표준에러 | **비어 있다** — stdout 에 병합된다 |
+| 실패한 호출도 `PostToolUse` 로 온다 | **오지 않는다** (exit 127·1 둘 다 이벤트 없음) |
+
+**바뀐 판정 방식** — 종료 코드가 없으므로 원안대로면 모든 검증이 `ok: null` 이 되어 원장이
+무용지물이다. 대신 더 나은 신호가 드러났다: **이벤트의 존재 자체가 성공이다.**
+
+- `PostToolUse` 기록이 있다 → 그 호출은 성공했다
+- `PostToolUseFailure` 기록이 있다 → 실패했다
+
+정규식이 한 줄도 필요 없다. fablize가 `"0 failed"` 를 실패로 잡는 결함을 안게 된 그 경로가
+아예 생기지 않는다.
+
+**바뀐 원장 키** — 페이로드에 `prompt_id` 가 있다. 파일은 세션·cwd 당 하나로 두되 그 안에
+`prompt_id` 를 기록하고, 다른 값이 오면 내용을 리셋한다. **턴 경계가 페이로드에서 오므로
+`gate.cjs` 의 리셋 배선이 통째로 불필요해진다** (3단계 축소).
 
 ## Steps
 

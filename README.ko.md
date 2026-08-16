@@ -96,6 +96,7 @@ core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 �
 |---|---|---|
 | `SessionStart` | `hooks/core.cjs` | core 규칙을 주입. `source=compact` 에도 다시 주입해 압축으로 밀려난 규칙을 복구 |
 | `UserPromptSubmit` | `hooks/gate.cjs` | core 핵심을 한 줄로 매 턴 상기. 활성 계획서가 있으면 함께 올림 |
+| `PostToolUse` · `PostToolUseFailure` | `hooks/observe.cjs` | 이번 턴에 도구가 실제로 한 일을 기록. 대화에는 아무것도 쓰지 않음 |
 | `Stop` | `hooks/finish-gate.cjs` | 승인된 계획서가 남은 채 끝내려 하면 **세션당 1회만** 되물음 |
 
 `gate.cjs` 와 `finish-gate.cjs` 는 `docs/plans/approved/` 를 실제로 읽어 판단하므로, 계획서가
@@ -103,7 +104,13 @@ core에는 계획서 요구가 들어 있지 않습니다. 그래서 일회성 �
 `draft/` 에서 대기 중인 계획서는 두 훅에 보이지 않으므로, 승인 전에 완주를 미는 일이 없습니다.
 이전 버전의 `docs/plans/task_*.md` 직속 파일은 draft 로 간주합니다.
 
-셋 다 fail-open입니다 — 어떤 오류에서도 exit 0 하므로 훅이 세션을 막지 않습니다. 다만 이제
+`observe.cjs` 는 Evidence 규칙을 부탁이 아니라 **검증 가능한 것**으로 만듭니다. Claude Code는
+성공한 호출에만 `PostToolUse` 를 발생시키므로 **어느 이벤트가 왔는지가 곧 판정**입니다. 출력
+텍스트를 파싱하지 않으니 `"0 failed"` 를 실패로 오독할 여지가 없습니다. `Stop` 되물음은 추측
+대신 관측된 사실을 말합니다 — 파일이 바뀌었는지, 검증이 돌았는지. 중단 조건은 늘리지 않으며
+게이트는 여전히 세션당 1회입니다.
+
+전부 fail-open입니다 — 어떤 오류에서도 exit 0 하므로 훅이 세션을 막지 않습니다. 다만 이제
 조용히 넘어가지 않고 `systemMessage` 로 무엇이 실패했는지 알립니다.
 
 `Stop` 훅은 세션당 한 번만 개입하고 그 뒤로는 항상 통과시킵니다 — 완주를 유도하되 함정이

@@ -26,6 +26,7 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const { activePlans, expectedMissing } = require('./lib/plans.cjs');
+const { load: loadLedger } = require('./lib/ledger.cjs');
 
 // Fail open, but never silently. Expected conditions (no stdin, no docs/plans, no marker yet)
 // stay quiet; anything else is reported. This hook fired once with no marker written and the
@@ -63,7 +64,8 @@ function sweepStaleMarkers(dir) {
   }
   const cutoff = Date.now() - MARKER_TTL_MS;
   for (const name of names) {
-    if (!name.endsWith('.stop')) continue;
+    // Ledgers accumulate the same way markers do, so they are swept on the same schedule.
+    if (!name.endsWith('.stop') && !name.startsWith('ledger-')) continue;
     const file = path.join(dir, name);
     try {
       if (fs.statSync(file).mtimeMs < cutoff) fs.unlinkSync(file);
@@ -143,9 +145,34 @@ function recordFired(dir, sessionId, cwd) {
   return failure;
 }
 
-function reasonText(names) {
+// What the observation hook saw this turn, as one plain sentence. Facts only -- this does not
+// add a stop condition. The gate intervenes once per session and that stays true; all this does
+// is make the existing nudge specific instead of generic.
+function observedText(ledger) {
+  if (!ledger || !ledger.prompt_id) return null;
+
+  const passed = ledger.verifications.filter((v) => v.ok);
+  const failed = ledger.verifications.filter((v) => !v.ok);
+  const parts = [];
+
+  if (ledger.changed) {
+    const kinds = ledger.change_kinds.length ? ` (${ledger.change_kinds.join(', ')})` : '';
+    parts.push(`files changed${kinds}`);
+  } else {
+    parts.push('no files changed');
+  }
+
+  if (failed.length > 0) parts.push(`${failed.length} verification command(s) failed`);
+  if (passed.length > 0) parts.push(`${passed.length} verification command(s) passed`);
+  if (ledger.verifications.length === 0) parts.push('no verification command was observed');
+
+  return `Observed this turn: ${parts.join('; ')}.`;
+}
+
+function reasonText(names, observed) {
   return [
     `An approved plan is still open: ${names} (docs/plans/approved/)`,
+    ...(observed ? ['', observed] : []),
     '',
     'If the plan has steps left, continue without seeking approval again.',
     'If it is finished, give the final report: present verification evidence for each step ->',
@@ -180,7 +207,14 @@ function main() {
   if (alreadyFired(markerDir, input.session_id, cwd)) return;
   const markerFailure = recordFired(markerDir, input.session_id, cwd);
 
-  const payload = { decision: 'block', reason: reasonText(active.join(', ')) };
+  let observed = null;
+  try {
+    observed = observedText(loadLedger(input.session_id, cwd));
+  } catch (_) {
+    // the ledger is an enrichment; the nudge stands without it
+  }
+
+  const payload = { decision: 'block', reason: reasonText(active.join(', '), observed) };
   if (markerFailure) {
     payload.systemMessage =
       'phasprint finish-gate: ' + markerFailure + ' -- the once-per-session guard may repeat.';

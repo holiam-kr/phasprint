@@ -101,6 +101,7 @@ Skills also trigger on their own, without an explicit call:
 |---|---|---|
 | `SessionStart` | `hooks/core.cjs` | Injects the core rules. Re-injects on `source=compact` to restore rules pushed out by compaction |
 | `UserPromptSubmit` | `hooks/gate.cjs` | Restates the core essentials in one line each turn; surfaces the active plan when there is one |
+| `PostToolUse` · `PostToolUseFailure` | `hooks/observe.cjs` | Records what tools actually did this turn. Writes nothing to the conversation |
 | `Stop` | `hooks/finish-gate.cjs` | Asks back **once per session** if a turn ends while an approved plan is still open |
 
 `gate.cjs` and `finish-gate.cjs` read `docs/plans/approved/` directly, so repos without plans
@@ -108,7 +109,13 @@ never hear about the cycle at all. **Approval is expressed by location** — a p
 `draft/` is invisible to both hooks, so nothing pushes toward completion before you have said
 yes. A loose `docs/plans/task_*.md` from an earlier version counts as a draft.
 
-All three fail open: any error still exits 0, so a hook can never block a session — but it now
+`observe.cjs` makes the Evidence rule checkable rather than merely requested: which event
+arrives *is* the verdict, since Claude Code raises `PostToolUse` only for calls that succeeded.
+Nothing is parsed out of output text, so "0 failed" can never be read as a failure. The Stop
+nudge then states what was observed — files changed, verification run or not — instead of
+guessing. It adds no stop condition; the gate still intervenes at most once per session.
+
+All of them fail open: any error still exits 0, so a hook can never block a session — but it now
 says what went wrong via `systemMessage` instead of failing silently.
 
 The `Stop` hook intervenes at most once per session and passes through afterwards — it nudges
