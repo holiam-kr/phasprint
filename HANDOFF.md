@@ -100,5 +100,13 @@ the completion verdict is the user's.
   Windows behaviour is **unverified**.
 - A loose `docs/plans/task_*.md` from before 0.4.0 counts as a *draft*, so upgrading repos go
   quiet rather than gaining unwanted completion pressure. That is deliberate.
+- **Bump `version` in `.claude-plugin/plugin.json` on every content change.** Claude Code caches
+  a plugin under `~/.claude/plugins/cache/<mp>/<plugin>/<version>/` and loads from there, not from
+  the marketplace clone. `/plugin update` pulls the clone but compares version strings, so an
+  unchanged version prints "already at the latest version" and leaves a stale cache behind:
+  `b3539e0` renamed `commands/plan.md` to `draft.md` without a bump and `/draft` simply did not
+  exist afterwards, while the clone showed the rename correctly.
+- **Verify against the cache, not the clone.** Running `node <clone>/hooks/core.cjs` proves what
+  the repository holds, not what Claude Code executes. The cache path carries the version.
 - `git commit` in this repo needs an explicit identity (`-c user.name -c user.email`); no
   `user.name`/`user.email` is configured globally or locally.
