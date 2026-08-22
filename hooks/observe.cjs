@@ -79,6 +79,13 @@ function main() {
   const dir = markerDir();
   if (recordingEnabled(dir)) recordRaw(dir, payload);
 
+  // A user interrupt arrives as PostToolUseFailure too -- measured 2026-08-22, the failure
+  // payload carries `is_interrupt` (and an `error` string, and no `tool_response`). A cancelled
+  // command reached no verdict, so recording it as a failed verification would make the ledger
+  // claim evidence that was never produced -- inverted, but the same fault the event-based
+  // design exists to avoid. Observe nothing.
+  if (payload.is_interrupt === true) return;
+
   const succeeded = payload.hook_event_name !== 'PostToolUseFailure';
   const tool = String(payload.tool_name || '');
   const input = payload.tool_input && typeof payload.tool_input === 'object' ? payload.tool_input : {};

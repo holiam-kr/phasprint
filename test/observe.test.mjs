@@ -159,3 +159,51 @@ test('recording is off unless it is switched on', () => {
   observe(bash('echo hi'), tmp);
   assert.equal(fs.existsSync(path.join(tmp, 'phasprint', 'record.jsonl')), true);
 });
+
+// Measured 2026-08-22: PostToolUseFailure carries `error` and `is_interrupt` and drops
+// `tool_response` entirely. A user interrupt arrives on that same event, so the ledger must not
+// read a cancelled command as a verdict.
+const interrupted = (command) => ({
+  hook_event_name: 'PostToolUseFailure',
+  session_id: SESSION,
+  cwd: CWD,
+  prompt_id: 'p1',
+  tool_name: 'Bash',
+  tool_input: { command },
+  error: 'Interrupted by user',
+  is_interrupt: true,
+});
+
+test('an interrupted verification is not observed at all', () => {
+  const tmp = scratch('interrupt');
+  const { out, code } = observe(interrupted('node --test'), tmp);
+  assert.equal(out, '');
+  assert.equal(code, 0);
+  // Not merely "recorded as ok: false" -- the interrupt produces no ledger entry whatsoever,
+  // so a turn whose only failure was a cancellation reads as an unremarked turn.
+  const key = crypto.createHash('sha1').update(`${SESSION}|${CWD}`).digest('hex').slice(0, 16);
+  assert.equal(fs.existsSync(path.join(tmp, 'phasprint', `ledger-${key}.json`)), false);
+});
+
+test('an interrupt leaves an existing observation untouched', () => {
+  const tmp = scratch('interrupt2');
+  observe(bash('node --test'), tmp);
+  observe(interrupted('npm test'), tmp);
+  const ledger = ledgerOf(tmp);
+  assert.deepEqual(ledger.verifications, [{ command: 'node --test', ok: true }]);
+  assert.equal(ledger.failures, 0);
+});
+
+// The failure envelope has no tool_response at all -- reading one would throw.
+test('a failure payload without tool_response is still recorded', () => {
+  const tmp = scratch('noresponse');
+  const { out, code } = observe(
+    { ...interrupted('npm test'), is_interrupt: false, error: 'Exit code 1' },
+    tmp
+  );
+  assert.equal(out, '');
+  assert.equal(code, 0);
+  const ledger = ledgerOf(tmp);
+  assert.deepEqual(ledger.verifications, [{ command: 'npm test', ok: false }]);
+  assert.equal(ledger.failures, 1);
+});

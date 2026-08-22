@@ -40,13 +40,19 @@ nothing is inherited when another plugin has rewritten it.
 - **Tool results are observed** (`observe.cjs`, `PostToolUse` + `PostToolUseFailure`). Which
   event arrives is the verdict — Claude Code raises `PostToolUse` only for calls that succeeded,
   so nothing is parsed out of output text. The Stop nudge now states what was observed.
+- **Both envelopes are measured, not assumed** (2026-08-22). `PostToolUseFailure` drops
+  `tool_response` and adds `error` and `is_interrupt`; every field the hook reads is on both
+  events, so the parser was correct. `is_interrupt` exposed a real defect — **a user interrupt
+  arrives on the same event as a genuine failure**, so cancelling `node --test` was recorded as
+  a failed verification. `observe.cjs` now observes nothing when `is_interrupt` is true.
+  Suite is 66 tests; removing that guard fails two of them.
 - `${CLAUDE_PLUGIN_ROOT}` **does** expand inside command markdown bodies — confirmed by invoking
   `/plan` against the installed 0.5.0 and reading the cache path in its place.
 
 ## In progress
 
-`docs/plans/approved/task_004.md` — the observation hook. Implemented and tested; **one
-verification is outstanding**, see Next.
+Nothing open. `task_004` (the observation hook) is reported and archived to
+`docs/plans/archives/`; the completion verdict is the user's.
 
 ## Next
 
@@ -55,11 +61,10 @@ verification is outstanding**, see Next.
   experiment (version skew, split TMPDIR, duplicate registration, changed session id) and the
   cause is still **unverified**. The instrumentation added since would now report it; the wait
   is for a recurrence.
-- **The `PostToolUseFailure` payload has never been seen.** `observe.cjs` decides success by
-  `hook_event_name !== 'PostToolUseFailure'`, which assumes that event carries the same envelope
-  as `PostToolUse`. That assumption is **unverified** — the same class of assumption that step 1
-  disproved for exit codes. Confirm by reloading the plugin with recording on
-  (`touch $TMPDIR/phasprint/record.on`) and running a command that exits non-zero.
+- **Open question, undecided:** carrying the harness to a non-Claude-Code runner. The prompt
+  text ports as-is (~17.9 KB: core rules, both skills, three commands); the ~30 KB of hooks does
+  not, and with it goes the observation that makes the Evidence rule more than a request.
+  Whether the target supports hooks decides whether this is an extraction or a port.
 - Whether observing is worth its cost is **unmeasured**. One extra process per Bash/Edit/Write
   call, and fablize's measurement protocol warns a gate can be net negative by filling context
   with noise.

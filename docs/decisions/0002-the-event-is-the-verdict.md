@@ -52,6 +52,28 @@ Write tool_response = {type:"create", filePath, content, structuredPatch, origin
 Under the approved design every verification would have been recorded as `ok: null` and the
 ledger would have been useless. The measurement replaced a worse design with a better one.
 
+### The failure envelope, measured separately (2026-08-22)
+
+Shipping the parser left one assumption standing: that `PostToolUseFailure` carries the same
+envelope as `PostToolUse`. It does not, and it was measured rather than assumed:
+
+| | `PostToolUse` | `PostToolUseFailure` |
+|---|---|---|
+| `cwd` `prompt_id` `session_id` `tool_input` `tool_name` `tool_use_id` `transcript_path` `duration_ms` `effort` `permission_mode` | present | present |
+| `tool_response` | present | **absent** |
+| `error` | — | **present** (a string) |
+| `is_interrupt` | — | **present** |
+
+Every field the hook reads is on both events, and it never touches `tool_response`, so the
+parser was correct as written. But `is_interrupt` revealed a defect: **a user interrupt arrives
+on the same event as a genuine failure.** Cancelling a running `node --test` was recorded as
+`{ok: false}` and counted a failure, so the Stop nudge would report a verification that failed
+when none had reached a verdict at all.
+
+That is the same fault as the regex this design rejected, inverted -- a ledger claiming evidence
+that was never produced. `observe.cjs` now returns before recording anything when
+`is_interrupt` is true: an interrupt is not an observation. Removing that guard fails two tests.
+
 ## Alternatives rejected
 
 **Regex over output text**, as the reference implementation falls back to. Its `FAILURE_RE`
