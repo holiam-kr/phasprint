@@ -11,7 +11,7 @@ Carry out steps 3-5 of ${CLAUDE_PLUGIN_ROOT}/rules/cycle.md.
      Several drafts: ask which one before moving.
   3. Nothing in either, and a loose `docs/plans/task_*.md` from an older layout — treat it as a
      draft: confirm with the user, then move it to `approved/`.
-  4. Nothing anywhere — there is no plan to run. Say so and suggest `/plan <task>`. Do not
+  4. Nothing anywhere — there is no plan to run. Say so and suggest `/draft <task>`. Do not
      improvise a plan and start building.
 - Carry every step of the plan through to completion. **Do not stop between steps to seek approval.**
 - Clear the quality gate at the end of each step (unit tests, lint, regression; check a real

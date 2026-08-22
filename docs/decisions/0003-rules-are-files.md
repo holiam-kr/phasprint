@@ -56,7 +56,15 @@ The fallback is three rules, not seven. That is a real reduction, not a transpar
 - 15,197 bytes of rules became 8,556 — a 44% cut with every rule preserved. The plan's target
   was 5,000, and it was **missed**: what remains is the plan template, four tables, the five stop
   conditions and the six debugging steps. See `docs/plans/archives/task_005.md`.
-- Whether a three-line stub still triggers the way a full `SKILL.md` did is **unverified** until
-  a live reload.
+- Measured after a live reload at 0.7.0: the clone carries `rules/`, the injection carries the
+  six rules and an absolute locator, and following that locator reaches `cycle.md` (6,554 bytes,
+  13 sections). Both stubs register and appear by name. Whether they still *auto-trigger* the way
+  a full `SKILL.md` did is **unverified** — registration is not firing.
+- The same live check turned up an older defect: core advertised `` `/plan <task>` `` on every
+  session, and `/plan` reaches Claude Code's built-in plan mode, not this plugin. Plugin commands
+  are namespaced (`phasprint:plan`), so the bare name never resolved. The command is now `/draft`,
+  which matches the directory it writes to and leaves `draft -> go -> report` reading as the
+  cycle it is. A test now anchors every slash command the injection names to a file in
+  `commands/`; 73 tests passed while the harness advertised a door it could not open.
 - The commands cite cycle steps by number, so a renumbering breaks them silently. A test now pins
   the numbers each command claims against the headings in `rules/cycle.md`.

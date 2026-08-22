@@ -68,7 +68,7 @@ function main() {
     process.stdout.write(degraded(err) + '\n');
     return;
   }
-  const locator = `The plan cycle and the debugging protocol are at ${CYCLE_FILE} -- read it before multi-step work or before debugging. In Claude Code, \`/plan <task>\` starts the cycle.`;
+  const locator = `The plan cycle and the debugging protocol are at ${CYCLE_FILE} -- read it before multi-step work or before debugging. In Claude Code, \`/draft <task>\` starts the cycle.`;
   process.stdout.write(core + '\n\n' + locator + '\n');
 }
 

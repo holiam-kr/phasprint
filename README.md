@@ -45,7 +45,7 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
   entry point, isolation) are injected by a `SessionStart` hook on every session. They apply everywhere immediately and never touch
   `CLAUDE.md` — phasprint does not read that file either, so the harness is whole on its own
   and inherits nothing from a plugin that has rewritten it.
-- The **plan cycle** lives in `rules/cycle.md` and loads only when you call `/plan` or the
+- The **plan cycle** lives in `rules/cycle.md` and loads only when you call `/draft` or the
   `sprint` skill triggers. Repos that don't use plans are never asked for one.
 
 ## Why two layers
@@ -53,7 +53,7 @@ Evidence rule: any claim that something is done, passing, or fixed must be backe
 | Layer | Contents | Loaded when | Scope |
 |---|---|---|---|
 | **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), debugging entry point, isolation | automatically at session start | every project |
-| **cycle** | plan → run to completion → adversarial review → report, document layout, `HANDOFF.md` | on `/plan` or skill trigger | only repos that use it |
+| **cycle** | plan → run to completion → adversarial review → report, document layout, `HANDOFF.md` | on `/draft` or skill trigger | only repos that use it |
 
 core contains no plan requirement, so throwaway scripts and exploration repos are never
 nagged to create `docs/plans/`.
@@ -72,7 +72,7 @@ session and again on every compaction, so adding a rule means naming the one it 
 
 | Command | What it does |
 |---|---|
-| `/plan <description>` | Agree on goal and scope → write `docs/plans/draft/task_NNN.md` → wait for approval |
+| `/draft <description>` | Agree on goal and scope → write `docs/plans/draft/task_NNN.md` → wait for approval |
 | `/go [plan file]` | Approve (move `draft/` → `approved/`) and implement to completion — stops only on stop conditions |
 | `/report` | Present verification evidence → update `HANDOFF.md` → archive the plan → commit |
 

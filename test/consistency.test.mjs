@@ -134,7 +134,7 @@ test('the skill stubs are pointers, not a second copy of the rules', () => {
 // A Korean trigger list written with double quotes inside an already-quoted YAML scalar breaks
 // the frontmatter silently -- the command simply stops describing itself. Caught in review once.
 test('command frontmatter descriptions stay parseable', () => {
-  for (const name of ['plan.md', 'go.md', 'report.md']) {
+  for (const name of ['draft.md', 'go.md', 'report.md']) {
     const fm = read(`commands/${name}`).split('---')[1];
     const line = (fm.split('\n').find((l) => l.startsWith('description:')) || '');
     assert.ok(line, `${name} has no description`);
@@ -147,7 +147,7 @@ test('command frontmatter descriptions stay parseable', () => {
 // the literal cache path in its place. Whether it expands in a SKILL.md body is unverified, which
 // is why the stubs do not use it and core.cjs computes the path from __dirname instead.
 test('every command carries a Korean trigger and points at the rules by plugin root', () => {
-  for (const name of ['plan.md', 'go.md', 'report.md']) {
+  for (const name of ['draft.md', 'go.md', 'report.md']) {
     const src = read(`commands/${name}`);
     assert.match(src, /한국어/, `${name} has no Korean trigger`);
     assert.match(src, /\$\{CLAUDE_PLUGIN_ROOT\}\/rules\/cycle\.md/, `${name} does not point at the rules`);
@@ -162,7 +162,7 @@ test('the step numbers the commands cite exist in rules/cycle.md', () => {
   for (const n of [1, 2, 3, 4, 5, 6]) {
     assert.match(cycle, new RegExp(`^## ${n}\\. `, 'm'), `rules/cycle.md has no step ${n}`);
   }
-  assert.match(read('commands/plan.md'), /steps 1-2 of/);
+  assert.match(read('commands/draft.md'), /steps 1-2 of/);
   assert.match(read('commands/go.md'), /steps 3-5 of/);
   assert.match(read('commands/report.md'), /step 6 of/);
 });
@@ -237,4 +237,26 @@ test('an empty rules file degrades as loudly as a missing one', () => {
   assert.match(res.stdout, /no rules found/, 'an empty rules file passes silently');
   assert.match(res.stdout, /NOT loaded/, 'the session is not told its rules are reduced');
   assert.match(res.stdout, /claims of done or passing/, 'the compressed essentials are missing');
+});
+
+// The injection names a slash command, and it named one that does not resolve: `/plan` reaches
+// Claude Code's built-in plan mode, not this plugin. Every test passed while core advertised a
+// door the harness cannot open, on every session and every compaction. Anchor the advertised
+// name to a file that actually exists.
+test('every slash command core advertises exists in commands/', () => {
+  const res = spawnSync(process.execPath, [path.join(ROOT, 'hooks', 'core.cjs')], {
+    input: '',
+    encoding: 'utf8',
+  });
+  const advertised = [...res.stdout.matchAll(/`\/([a-z][\w-]*)/g)].map((m) => m[1]);
+  assert.ok(advertised.length > 0, 'the injection advertises no command at all');
+  for (const name of advertised) {
+    assert.ok(
+      fs.existsSync(path.join(ROOT, 'commands', `${name}.md`)),
+      `core advertises /${name} but commands/${name}.md does not exist`
+    );
+    // `plan` collides with Claude Code's own plan mode, which wins. Naming it again would
+    // reintroduce exactly the defect this test was written for.
+    assert.notEqual(name, 'plan', '/plan is shadowed by the built-in plan mode');
+  }
 });

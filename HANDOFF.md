@@ -12,7 +12,7 @@ Two layers:
 
 - **core** — behavioural rules injected by the `SessionStart` hook on every session, in every
   project. No document requirements live here.
-- **cycle** — plan → run to completion → adversarial review → report. Loads only on `/plan` or
+- **cycle** — plan → run to completion → adversarial review → report. Loads only on `/draft` or
   when the `sprint` skill triggers.
 
 phasprint neither reads nor writes `CLAUDE.md`. Nothing degrades when that file is absent, and
@@ -52,6 +52,10 @@ nothing is inherited when another plugin has rewritten it.
   deleted and `rules/` still stands, which is what makes the harness portable to a runner without
   hooks. 15,197 bytes of rules became 8,097 (47% down); the `Secrets` rule was removed from core
   at the user's direction, so core is six rules.
+- **The command is `/draft`, not `/plan`.** `/plan` reaches Claude Code's built-in plan mode;
+  plugin commands are namespaced, so the bare name never reached phasprint — while core
+  advertised it on every session and every compaction. `/draft` matches the directory it writes
+  to. A test now anchors every advertised slash command to a file in `commands/`.
 - **Hooks no longer truncate their own output.** `process.exit(0)` tore the process down before
   Node flushed an asynchronous pipe write: a 1,741-byte injection arrived as 512 bytes, one chunk,
   deterministically. Pre-existing since at least `0642c4d`, and it affected `core.cjs` and
@@ -62,8 +66,8 @@ nothing is inherited when another plugin has rewritten it.
 
 ## In progress
 
-`docs/plans/approved/task_005.md` — the rules-as-files restructure. Implemented and tested
-(73 passing); **two things are outstanding**, see Next.
+Nothing open. `task_005` (rules as files) is reported and archived to `docs/plans/archives/`;
+the completion verdict is the user's.
 
 ## Next
 
@@ -72,9 +76,11 @@ nothing is inherited when another plugin has rewritten it.
   experiment (version skew, split TMPDIR, duplicate registration, changed session id) and the
   cause is still **unverified**. The instrumentation added since would now report it; the wait
   is for a recurrence.
-- **Whether a ~700-byte `SKILL.md` stub still auto-triggers is unverified.** The plugin loads
-  from the git clone at `~/.claude/plugins/marketplaces/phasprint`, so this needs a push, then
-  `/plugin update phasprint` and `/reload-plugins`.
+- **Whether a ~700-byte `SKILL.md` stub still auto-triggers is unverified.** Verified at 0.7.0:
+  both stubs register and resolve their pointer. Firing on a natural prompt was not exercised.
+- **Whether `/go` and `/report` resolve unqualified is unmeasured.** `/plan` did not — the
+  built-in won — which is why the command is now `/draft`. Neither of the other two has an
+  obvious built-in twin, but that is inference, not measurement.
 - **Further compression is undecided.** Rules stand at 8,097 bytes against a 5,000 target.
   `rules/cycle.md` is 55% two sections: `## Debugging` (1,880) and `## 2. Plan` (1,734, of which
   496 is the plan template itself). Cutting to ~4,800 is possible but reaches the reasoning the

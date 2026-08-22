@@ -11,7 +11,7 @@
  * telling the model to "carry it to completion" during that wait is precisely the wrong nudge.
  *
  * Repos without plans never hear about the cycle -- writing a plan is not a core requirement,
- * it is asked for only when the /plan command or the sprint skill is invoked.
+ * it is asked for only when the /draft command or the sprint skill is invoked.
  */
 
 const fs = require('fs');
