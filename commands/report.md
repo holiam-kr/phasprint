@@ -2,7 +2,7 @@
 description: "Final report: verification evidence + HANDOFF.md update + archive the plan + commit 한국어 - 최종 보고, 마무리, 정리하고 커밋."
 ---
 
-Carry out step 6 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
+Carry out step 6 of ${CLAUDE_PLUGIN_ROOT}/rules/cycle.md.
 
 - Give verification evidence for every step. Use **only output from commands you actually ran
   this session**. Never call something passing that you did not run. Mark anything you could

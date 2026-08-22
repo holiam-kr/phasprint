@@ -32,10 +32,6 @@ Phasprint resolves these into a single harness.
 Evidence rule: any claim that something is done, passing, or fixed must be backed by
 **output from a command actually run in this session**.
 
-Secret rule: once a key, token, password, or `.env` value is read, it is **masked from that
-point on** — reproduced only as its first 4 and last 4 characters, never in full, in replies,
-files, commits, commands, logs, or subagent prompts.
-
 ## Install
 
 ```
@@ -45,19 +41,18 @@ files, commits, commands, logs, or subagent prompts.
 
 **That's all.** No config to edit, no script to run.
 
-- The **core rules** (evidence, scope, who decides completion, stop conditions, secret
-  masking, debugging entry point, isolation) are injected by a
-  `SessionStart` hook on every session. They apply everywhere immediately and never touch
+- The **core rules** (evidence, scope, who decides completion, stop conditions, debugging
+  entry point, isolation) are injected by a `SessionStart` hook on every session. They apply everywhere immediately and never touch
   `CLAUDE.md` — phasprint does not read that file either, so the harness is whole on its own
   and inherits nothing from a plugin that has rewritten it.
-- The **plan cycle** loads only when you call `/plan` or the `sprint` skill triggers.
-  Repos that don't use plans are never asked for one.
+- The **plan cycle** lives in `rules/cycle.md` and loads only when you call `/plan` or the
+  `sprint` skill triggers. Repos that don't use plans are never asked for one.
 
 ## Why two layers
 
 | Layer | Contents | Loaded when | Scope |
 |---|---|---|---|
-| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), secret masking, debugging entry point, isolation | automatically at session start | every project |
+| **core** | evidence-based completion, scope discipline, completion verdict, stop conditions (two failed attempts / blocker / destructive action), debugging entry point, isolation | automatically at session start | every project |
 | **cycle** | plan → run to completion → adversarial review → report, document layout, `HANDOFF.md` | on `/plan` or skill trigger | only repos that use it |
 
 core contains no plan requirement, so throwaway scripts and exploration repos are never
@@ -65,7 +60,7 @@ nagged to create `docs/plans/`.
 
 **What earns a place in core:** a behavioural rule that holds in every project and whose absence
 lets real damage through. Not document requirements, not per-situation procedure — those belong
-to the cycle or to a skill, which load only when they apply. Every line is paid for on every
+to `rules/cycle.md`, which loads only when it applies. Every line is paid for on every
 session and again on every compaction, so adding a rule means naming the one it replaces.
 
 > **Note:** Phasprint is designed to **replace** fablize / superpowers. Running them together
@@ -81,10 +76,33 @@ session and again on every compaction, so adding a rule means naming the one it 
 | `/go [plan file]` | Approve (move `draft/` → `approved/`) and implement to completion — stops only on stop conditions |
 | `/report` | Present verification evidence → update `HANDOFF.md` → archive the plan → commit |
 
-Skills also trigger on their own, without an explicit call:
+Skills also trigger on their own, without an explicit call. Both are three-line pointers into
+`rules/cycle.md`, not a second copy of the rules:
 
 - `sprint` — multi-step development work
 - `investigate` — bugs, test failures, unexplained behavior
+
+## Taking the rules elsewhere
+
+The rules are two plain markdown files with no Claude Code syntax in them:
+
+| File | Loaded |
+|---|---|
+| `rules/core.md` | every session, and again after every compaction |
+| `rules/cycle.md` | when the cycle or the debugging protocol applies |
+
+Everything else here points at them. `hooks/core.cjs` reads `rules/core.md` rather than holding a
+copy of it, the two `SKILL.md` files are pointers, and the three commands address
+`rules/cycle.md` by step number. There is one copy of every rule, so nothing can drift.
+
+To run the same harness on a tool without hooks or skills, copy `rules/` and have that tool load
+`core.md` at the start of a session. `hooks/`, `skills/`, `commands/`, and `test/` can all be
+deleted — nothing inside `rules/` refers to them.
+
+What you lose is enforcement, not rules. `observe.cjs` records what tools actually did, so the
+Evidence rule can be checked against something. Without it, Evidence is a request to the model:
+a session that claims "tests pass" without running them leaves the harness in exactly the state
+of one that ran them.
 
 ## Document layout
 
@@ -99,7 +117,7 @@ Skills also trigger on their own, without an explicit call:
 
 | Event | Script | Behavior |
 |---|---|---|
-| `SessionStart` | `hooks/core.cjs` | Injects the core rules. Re-injects on `source=compact` to restore rules pushed out by compaction |
+| `SessionStart` | `hooks/core.cjs` | Reads `rules/core.md` and injects it, plus the absolute path of `rules/cycle.md`. Re-injects on `source=compact` to restore rules pushed out by compaction |
 | `UserPromptSubmit` | `hooks/gate.cjs` | Restates the core essentials in one line each turn; surfaces the active plan when there is one |
 | `PostToolUse` · `PostToolUseFailure` | `hooks/observe.cjs` | Records what tools actually did this turn. Writes nothing to the conversation |
 | `Stop` | `hooks/finish-gate.cjs` | Asks back **once per session** if a turn ends while an approved plan is still open |

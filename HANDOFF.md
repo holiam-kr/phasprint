@@ -46,13 +46,24 @@ nothing is inherited when another plugin has rewritten it.
   arrives on the same event as a genuine failure**, so cancelling `node --test` was recorded as
   a failed verification. `observe.cjs` now observes nothing when `is_interrupt` is true.
   Suite is 66 tests; removing that guard fails two of them.
+- **The rules are files, not code** (`rules/core.md`, `rules/cycle.md`). `hooks/core.cjs` reads
+  them instead of holding a copy; the two `SKILL.md` files are ~700-byte pointers; the commands
+  address `rules/cycle.md` by step number. `hooks/`, `skills/`, `commands/` and `test/` can be
+  deleted and `rules/` still stands, which is what makes the harness portable to a runner without
+  hooks. 15,197 bytes of rules became 8,097 (47% down); the `Secrets` rule was removed from core
+  at the user's direction, so core is six rules.
+- **Hooks no longer truncate their own output.** `process.exit(0)` tore the process down before
+  Node flushed an asynchronous pipe write: a 1,741-byte injection arrived as 512 bytes, one chunk,
+  deterministically. Pre-existing since at least `0642c4d`, and it affected `core.cjs` and
+  `finish-gate.cjs` (687 -> 512). All four hooks now set `process.exitCode` instead. `spawnSync`
+  does not reproduce it, so the regression test builds a real shell pipe.
 - `${CLAUDE_PLUGIN_ROOT}` **does** expand inside command markdown bodies — confirmed by invoking
   `/plan` against the installed 0.5.0 and reading the cache path in its place.
 
 ## In progress
 
-Nothing open. `task_004` (the observation hook) is reported and archived to
-`docs/plans/archives/`; the completion verdict is the user's.
+`docs/plans/approved/task_005.md` — the rules-as-files restructure. Implemented and tested
+(73 passing); **two things are outstanding**, see Next.
 
 ## Next
 
@@ -61,10 +72,16 @@ Nothing open. `task_004` (the observation hook) is reported and archived to
   experiment (version skew, split TMPDIR, duplicate registration, changed session id) and the
   cause is still **unverified**. The instrumentation added since would now report it; the wait
   is for a recurrence.
-- **Open question, undecided:** carrying the harness to a non-Claude-Code runner. The prompt
-  text ports as-is (~17.9 KB: core rules, both skills, three commands); the ~30 KB of hooks does
-  not, and with it goes the observation that makes the Evidence rule more than a request.
-  Whether the target supports hooks decides whether this is an extraction or a port.
+- **Whether a ~700-byte `SKILL.md` stub still auto-triggers is unverified.** The plugin loads
+  from the git clone at `~/.claude/plugins/marketplaces/phasprint`, so this needs a push, then
+  `/plugin update phasprint` and `/reload-plugins`.
+- **Further compression is undecided.** Rules stand at 8,097 bytes against a 5,000 target.
+  `rules/cycle.md` is 55% two sections: `## Debugging` (1,880) and `## 2. Plan` (1,734, of which
+  496 is the plan template itself). Cutting to ~4,800 is possible but reaches the reasoning the
+  plan named as not-to-be-cut: the trivial-work exception, the debugging skip condition, and the
+  `## Design` triggers.
+- **Why Claude Code never saw the truncation is unverified.** The shell pipe loses bytes every
+  time, yet this session's SessionStart injection and Stop nudge both arrived whole.
 - Whether observing is worth its cost is **unmeasured**. One extra process per Bash/Edit/Write
   call, and fablize's measurement protocol warns a gate can be net negative by filling context
   with noise.

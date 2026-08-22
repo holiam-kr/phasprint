@@ -119,4 +119,9 @@ try {
 } catch (err) {
   failOpen(err);
 }
-process.exit(0);
+// Not process.exit(0). When stdout is a pipe -- which is how a hook's output is collected --
+// Node's writes are asynchronous, and process.exit() tears the process down before the queued
+// bytes are flushed. Measured on 2026-08-22: this file's 1,741-byte injection arrived as 512
+// bytes, one chunk, deterministically over five runs. Setting the code instead lets the event
+// loop drain the write and exit on its own; there is nothing else holding it open.
+process.exitCode = 0;

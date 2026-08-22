@@ -16,11 +16,7 @@
 
 const fs = require('fs');
 const { activePlans } = require('./lib/plans.cjs');
-
-const ESSENTIALS =
-  'phasprint: claims of done or passing rest on command output from this session only - ' +
-  'stay inside the requested scope - stop and ask when blocked twice or when a destructive ' +
-  'action is needed.';
+const { ESSENTIALS } = require('./lib/essentials.cjs');
 
 // Fail open, but never silently. Expected conditions (no stdin, no docs/plans) stay quiet;
 // anything else reaches failOpen and is reported, because a hook nobody can debug is worse
@@ -93,4 +89,9 @@ try {
 } catch (err) {
   failOpen(err);
 }
-process.exit(0);
+// Not process.exit(0). When stdout is a pipe -- which is how a hook's output is collected --
+// Node's writes are asynchronous, and process.exit() tears the process down before the queued
+// bytes are flushed. Measured on 2026-08-22: this file's 1,741-byte injection arrived as 512
+// bytes, one chunk, deterministically over five runs. Setting the code instead lets the event
+// loop drain the write and exit on its own; there is nothing else holding it open.
+process.exitCode = 0;

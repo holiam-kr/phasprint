@@ -80,17 +80,37 @@ process.on('exit', () => {
 test('core: injects every rule and exits 0', () => {
   const { out, code } = run('core.cjs', {});
   assert.equal(code, 0);
-  for (const rule of ['Evidence', 'Scope', 'Verdict', 'Stop', 'Secrets', 'Debugging', 'Isolation']) {
+  for (const rule of ['Evidence', 'Scope', 'Verdict', 'Stop', 'Debugging', 'Isolation']) {
     assert.match(out, new RegExp(`\\*\\*${rule}\\*\\*`), `missing rule: ${rule}`);
   }
 });
 
 // Not a style check. core is injected on every session and again on every compaction, so a rule
 // may only be added by naming the one it replaces -- changing this number should be deliberate.
-test('core holds exactly seven rules', () => {
+test('core holds exactly six rules', () => {
   const { out } = run('core.cjs', {});
   const bullets = out.match(/^- \*\*\w+\*\*/gm) || [];
-  assert.equal(bullets.length, 7, `core has ${bullets.length} rules: ${bullets.join(', ')}`);
+  assert.equal(bullets.length, 6, `core has ${bullets.length} rules: ${bullets.join(', ')}`);
+});
+
+// A hook's stdout is collected through a pipe, and Node's pipe writes are asynchronous.
+// `process.exit(0)` used to tear the process down mid-flush: measured 2026-08-22, a 1,741-byte
+// injection arrived as 512 bytes -- one chunk -- deterministically across five runs, silently
+// dropping the last three rules. spawnSync's own pipe does not reproduce it, so this test builds
+// a real shell pipe and compares against a redirect to a file.
+test('core: the full injection survives a shell pipe', () => {
+  const hook = path.join(HOOKS, 'core.cjs');
+  const out = scratch('pipe');
+  const file = path.join(out, 'direct.txt');
+  const sh = (cmd) => spawnSync('/bin/sh', ['-c', cmd], { encoding: 'utf8' });
+
+  sh(`${JSON.stringify(process.execPath)} ${JSON.stringify(hook)} < /dev/null > ${JSON.stringify(file)}`);
+  const direct = fs.readFileSync(file, 'utf8');
+  const piped = sh(`${JSON.stringify(process.execPath)} ${JSON.stringify(hook)} < /dev/null | cat`).stdout;
+
+  assert.ok(direct.length > 1000, `the fixture is too small to catch truncation: ${direct.length}`);
+  assert.equal(piped.length, direct.length, 'the pipe delivered less than the redirect did');
+  assert.match(piped, /\*\*Isolation\*\*/, 'the last rule did not survive the pipe');
 });
 
 test('core: output stays ASCII-only', () => {

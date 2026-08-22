@@ -2,7 +2,7 @@
 description: "Write a plan and get it approved. Argument: <task description> 한국어 - 계획 세워줘, 계획서 작성."
 ---
 
-Carry out steps 1-2 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
+Carry out steps 1-2 of ${CLAUDE_PLUGIN_ROOT}/rules/cycle.md.
 
 - Task: $ARGUMENTS
 - Agree on the goal and scope first, then write a 3-6 step plan to `docs/plans/draft/task_NNN.md`.

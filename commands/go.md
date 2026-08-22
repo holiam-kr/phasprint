@@ -2,7 +2,7 @@
 description: "Implement an approved plan to completion. Argument: [plan file] (defaults to the active plan) 한국어 - 진행해줘, 구현 시작, 완주."
 ---
 
-Carry out steps 3-5 of ${CLAUDE_PLUGIN_ROOT}/skills/sprint/SKILL.md.
+Carry out steps 3-5 of ${CLAUDE_PLUGIN_ROOT}/rules/cycle.md.
 
 - Plan: $ARGUMENTS. If empty, pick it up in this order — and remember that invoking `/go` **is**
   the approval, so the first thing to do with a draft is move it:
